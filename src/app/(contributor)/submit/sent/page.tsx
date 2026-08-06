@@ -6,7 +6,6 @@ import { Suspense } from 'react'
 function SentContent() {
   const router = useRouter()
   const params = useSearchParams()
-  const id = params.get('id')
 
   return (
     <div style={{
@@ -34,7 +33,7 @@ function SentContent() {
       </button>
       <button
         onClick={() => router.push('/submit')}
-        style={{ background: 'none', border: 'none', color: 'var(--violet)', fontSize: 14, cursor: 'pointer' }}
+        style={{ background: 'none', border: 'none', color: 'var(--violet)', fontSize: 14, minHeight: 'var(--touch)', cursor: 'pointer' }}
       >
         Create another post
       </button>

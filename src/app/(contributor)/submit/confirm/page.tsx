@@ -24,11 +24,14 @@ function ConfirmContent() {
       // reviewer from the contexts table (users who have a context record).
       supabase
         .from('contexts')
-        .select('user_id')
+        .select('id, user_id')
         .neq('user_id', data.user.id)
         .limit(1)
         .then(({ data: ctxData }) => {
-          if (ctxData?.[0]) setReviewerId(ctxData[0].user_id as string)
+          if (ctxData?.[0]) {
+            setReviewerId(ctxData[0].user_id as string)
+            setContextId(ctxData[0].id as string)
+          }
         })
     })
   }, [router])
@@ -60,15 +63,17 @@ function ConfirmContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: requestId }),
       })
+      if (!interpretRes.ok) throw new Error('Interpret failed')
       const interpretJson = await interpretRes.json() as { status?: string }
 
       if (interpretJson.status === 'draft_ready') {
         // Auto-generate draft
-        await fetch('/api/draft', {
+        const draftRes = await fetch('/api/draft', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ request_id: requestId }),
         })
+        if (!draftRes.ok) throw new Error('Draft generation failed')
       }
 
       router.push(`/submit/sent?id=${requestId}`)
