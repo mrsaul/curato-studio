@@ -123,7 +123,6 @@ export default function InputPage() {
               onPointerDown={startRecording}
               onPointerUp={stopRecording}
               onPointerLeave={stopRecording}
-              disabled={recordingState === 'processing'}
               style={{
                 width: 80, height: 80, borderRadius: '50%',
                 background: recordingState === 'recording' ? 'var(--red)' : 'var(--violet)',
