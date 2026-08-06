@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getRequest, getRequestDraft, updateRequest } from '@/lib/requests'
-import { ReviewDecisionType } from '@/types/request'
+import { ReviewDecisionType, RequestStatus } from '@/types/request'
 
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabaseClient()
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   const newStatus = body.decision === 'changes_requested' ? 'draft_ready' : body.decision
-  await updateRequest(supabase, request.id, { status: newStatus as never })
+  await updateRequest(supabase, request.id, { status: newStatus as RequestStatus })
 
   if (body.decision === 'approved' && body.edited_caption) {
     fetch(new URL('/api/memory', req.url).toString(), {

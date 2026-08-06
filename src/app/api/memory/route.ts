@@ -89,19 +89,24 @@ If no durable feedback, return []`
   if (!Array.isArray(proposals) || proposals.length === 0) return NextResponse.json({ ok: true })
 
   const serviceSupabase = createServiceClient()
-  await serviceSupabase.from('judgments').insert(
-    proposals.map(p => ({
-      user_id: user.id,
-      verb: p.verb,
-      domain: p.domain,
-      statement: p.statement,
-      context_id: request.context_id,
-      status: 'proposed',
-      confidence: p.confidence,
-      source_capture_ids: [],
-      proposed_by: 'studio',
-    }))
-  )
+  const { error: insertError } = await serviceSupabase
+    .from('judgments')
+    .insert(
+      proposals.map(p => ({
+        user_id: user.id,
+        verb: p.verb,
+        domain: p.domain,
+        statement: p.statement,
+        context_id: request.context_id,
+        status: 'proposed',
+        confidence: p.confidence,
+        source_capture_ids: [],
+        proposed_by: 'studio',
+      }))
+    )
+  if (insertError) {
+    console.error('memory: failed to insert judgments:', insertError.message)
+  }
 
   return NextResponse.json({ ok: true, proposed: proposals.length })
 }
