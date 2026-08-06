@@ -21,7 +21,13 @@ export default function InputPage() {
 
   async function startRecording() {
     setError(null)
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    let stream: MediaStream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    } catch {
+      setError('Microphone access denied. Please allow microphone access and try again.')
+      return
+    }
     const recorder = new MediaRecorder(stream)
     chunksRef.current = []
     recorder.ondataavailable = e => chunksRef.current.push(e.data)
@@ -172,6 +178,7 @@ export default function InputPage() {
           background: canContinue() ? 'var(--violet)' : 'var(--surface)',
           color: canContinue() ? '#fff' : 'var(--ink-faint)',
           border: 'none', borderRadius: 14, fontSize: 15,
+          cursor: canContinue() ? 'pointer' : 'not-allowed',
         }}
       >
         Continue
