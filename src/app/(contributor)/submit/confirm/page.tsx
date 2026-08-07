@@ -19,18 +19,13 @@ function ConfirmContent() {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.replace('/login'); return }
-      // In a real implementation, reviewer_id and context_id come from an invite link
-      // stored in sessionStorage or URL params. For MVP, look up the first available
-      // reviewer from the contexts table (users who have a context record).
-      supabase
-        .from('contexts')
-        .select('id, user_id')
-        .neq('user_id', data.user.id)
-        .limit(1)
-        .then(({ data: ctxData }) => {
-          if (ctxData?.[0]) {
-            setReviewerId(ctxData[0].user_id as string)
-            setContextId(ctxData[0].id as string)
+      // Use server-side endpoint so the service client can bypass RLS on contexts
+      fetch('/api/reviewer')
+        .then(r => r.json())
+        .then((json: { reviewer?: { id: string; context_id: string } }) => {
+          if (json.reviewer) {
+            setReviewerId(json.reviewer.id)
+            setContextId(json.reviewer.context_id)
           }
         })
     })
