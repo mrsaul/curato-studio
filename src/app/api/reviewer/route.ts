@@ -15,10 +15,29 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const service = createServiceClient()
+
+  // If STUDIO_REVIEWER_ID is set, use that specific user as the reviewer
+  const fixedReviewerId = process.env.STUDIO_REVIEWER_ID
+  if (fixedReviewerId && fixedReviewerId !== user.id) {
+    const { data: ctxData } = await service
+      .from('contexts')
+      .select('id, user_id')
+      .eq('user_id', fixedReviewerId)
+      .limit(1)
+    return NextResponse.json({
+      reviewer: {
+        id: fixedReviewerId,
+        context_id: ctxData?.[0]?.id ?? null,
+      },
+    })
+  }
+
+  // Fallback: first other user with a context (ordered by creation)
   const { data } = await service
     .from('contexts')
     .select('id, user_id')
     .neq('user_id', user.id)
+    .order('created_at', { ascending: false })
     .limit(1)
 
   if (!data?.[0]) return NextResponse.json({ reviewer: null })
