@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getContributorRequests } from '@/lib/requests'
 import { CreativeRequest, RequestStatus } from '@/types/request'
 import RequestReplyForm from './RequestReplyForm'
+import DraftRetryButton from './DraftRetryButton'
 
 const STATUS_LABEL: Record<RequestStatus, string> = {
   new: 'Received',
@@ -53,6 +54,9 @@ function RequestCard({ request }: { request: CreativeRequest }) {
       </div>
       {request.status === 'needs_info' && request.clarification_question && (
         <RequestReplyForm requestId={request.id} question={request.clarification_question} />
+      )}
+      {request.status === 'draft_ready' && (
+        <DraftRetryButton requestId={request.id} />
       )}
     </div>
   )
