@@ -46,23 +46,24 @@ function ConfirmContent() {
       const b64 = sessionStorage.getItem('photo_blob_b64')
       if (!b64) {
         if (mounted) setPhotoMissing(true)
-        return
-      }
-      try {
-        const parts = b64.split(',')
-        const mime = parts[0].split(':')[1].split(';')[0]
-        const byteStr = atob(parts[1])
-        const ab = new ArrayBuffer(byteStr.length)
-        const ia = new Uint8Array(ab)
-        for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i)
-        const blob = new Blob([ab], { type: mime })
-        if (!mounted) return
-        setPhotoMimeType(mime)
-        setPhotoBlob(blob)
-        const url = URL.createObjectURL(blob)
-        setPhotoPreviewUrl(url)
-      } catch {
-        if (mounted) setPhotoMissing(true)
+      } else {
+        try {
+          const parts = b64.split(',')
+          const mime = parts[0].split(':')[1].split(';')[0]
+          const byteStr = atob(parts[1])
+          const ab = new ArrayBuffer(byteStr.length)
+          const ia = new Uint8Array(ab)
+          for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i)
+          const blob = new Blob([ab], { type: mime })
+          if (mounted) {
+            setPhotoMimeType(mime)
+            setPhotoBlob(blob)
+            const url = URL.createObjectURL(blob)
+            setPhotoPreviewUrl(url)
+          }
+        } catch {
+          if (mounted) setPhotoMissing(true)
+        }
       }
     }
 
