@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import PhotoEditor, { PhotoEditorHandle } from './PhotoEditor'
 
 type InputMode = 'text' | 'voice' | 'photo'
 type RecordingState = 'idle' | 'recording' | 'processing'
@@ -15,9 +16,11 @@ export default function InputPage() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
   const mediaRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const photoEditorRef = useRef<PhotoEditorHandle>(null)
 
   async function startRecording() {
     setError(null)
@@ -70,13 +73,32 @@ export default function InputPage() {
     return false
   }
 
-  function handleContinue() {
+  const handleContinue = useCallback(async () => {
+    if (mode === 'photo' && photoEditorRef.current) {
+      setExporting(true)
+      setError(null)
+      try {
+        const blob = await photoEditorRef.current.triggerExport()
+        const b64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        })
+        sessionStorage.setItem('photo_blob_b64', b64)
+        router.push('/submit/confirm?mode=photo')
+      } catch {
+        setError('Could not export photo. Please try again.')
+        setExporting(false)
+      }
+      return
+    }
     const params = new URLSearchParams()
     params.set('mode', mode)
     if (mode === 'text') params.set('text', text)
     if (mode === 'voice') params.set('transcript', transcript)
     router.push(`/submit/confirm?${params.toString()}`)
-  }
+  }, [mode, text, transcript, router])
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
     flex: 1, padding: '10px 0', fontSize: 13,
@@ -87,7 +109,6 @@ export default function InputPage() {
 
   return (
     <div style={{ paddingTop: 24, paddingBottom: 32 }}>
-      {/* Mode tabs */}
       <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', marginBottom: 28, border: '1.5px solid var(--line-soft)' }}>
         {(['text', 'voice', 'photo'] as InputMode[]).map(m => (
           <button key={m} onClick={() => setMode(m)} style={tabStyle(mode === m)}>
@@ -96,7 +117,6 @@ export default function InputPage() {
         ))}
       </div>
 
-      {/* Text mode */}
       {mode === 'text' && (
         <textarea
           value={text}
@@ -112,7 +132,6 @@ export default function InputPage() {
         />
       )}
 
-      {/* Voice mode */}
       {mode === 'voice' && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           {recordingState === 'processing' && (
@@ -140,26 +159,35 @@ export default function InputPage() {
         </div>
       )}
 
-      {/* Photo mode */}
       {mode === 'photo' && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={{ display: 'none' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhoto}
+            style={{ display: 'none' }}
+          />
           {photoUrl ? (
-            <img src={photoUrl} alt="Selected" style={{ width: '100%', borderRadius: 10, maxHeight: 300, objectFit: 'cover' }} />
+            <>
+              <PhotoEditor ref={photoEditorRef} sourceUrl={photoUrl} />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                style={{ fontSize: 13, color: 'var(--violet)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                Change photo
+              </button>
+            </>
           ) : (
             <button
               onClick={() => fileInputRef.current?.click()}
               style={{
                 width: '100%', minHeight: 180, borderRadius: 10, background: 'var(--surface)',
-                border: '2px dashed var(--line)', color: 'var(--ink-faint)', fontSize: 14,
+                border: '2px dashed var(--line-soft)', color: 'var(--ink-faint)', fontSize: 14, cursor: 'pointer',
               }}
             >
               Tap to take or choose a photo
-            </button>
-          )}
-          {photoUrl && (
-            <button onClick={() => fileInputRef.current?.click()} style={{ fontSize: 13, color: 'var(--violet)', background: 'none', border: 'none' }}>
-              Change photo
             </button>
           )}
         </div>
@@ -171,16 +199,16 @@ export default function InputPage() {
 
       <button
         onClick={handleContinue}
-        disabled={!canContinue()}
+        disabled={!canContinue() || exporting}
         style={{
           marginTop: 32, width: '100%', minHeight: 'var(--touch)',
-          background: canContinue() ? 'var(--violet)' : 'var(--surface)',
-          color: canContinue() ? '#fff' : 'var(--ink-faint)',
+          background: canContinue() && !exporting ? 'var(--violet)' : 'var(--surface)',
+          color: canContinue() && !exporting ? '#fff' : 'var(--ink-faint)',
           border: 'none', borderRadius: 14, fontSize: 15,
-          cursor: canContinue() ? 'pointer' : 'not-allowed',
+          cursor: canContinue() && !exporting ? 'pointer' : 'not-allowed',
         }}
       >
-        Continue
+        {exporting ? 'Preparing…' : 'Continue'}
       </button>
     </div>
   )
