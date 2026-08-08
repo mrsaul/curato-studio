@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase-server'
 import { getRequest, updateRequest, getReviewerTemplates } from '@/lib/requests'
 import { getBrandContext, formatBrandSystem } from '@/lib/brand'
 
@@ -117,7 +117,8 @@ Return JSON only:
 
   const matchedTemplate = templates.find(t => t.name === templateData.template_name)
 
-  const { data: draft, error: draftError } = await supabase
+  const service = createServiceSupabaseClient()
+  const { data: draft, error: draftError } = await service
     .from('request_drafts')
     .insert({
       request_id: request.id,

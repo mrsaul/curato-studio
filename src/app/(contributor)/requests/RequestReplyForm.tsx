@@ -26,7 +26,8 @@ export default function RequestReplyForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: requestId, reply: reply.trim() }),
       })
-      if (!clarifyRes.ok) throw new Error('Could not send reply')
+      // 400 means the request is already past needs_info — proceed to draft
+      if (!clarifyRes.ok && clarifyRes.status !== 400) throw new Error('Could not send reply')
 
       const draftRes = await fetch('/api/draft', {
         method: 'POST',
