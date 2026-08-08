@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import PhotoEditor, { PhotoEditorHandle } from './PhotoEditor'
 
@@ -23,6 +23,7 @@ export default function InputPage() {
   const photoEditorRef = useRef<PhotoEditorHandle>(null)
 
   async function startRecording() {
+    if (recordingState !== 'idle') return
     setError(null)
     let stream: MediaStream
     try {
@@ -62,9 +63,14 @@ export default function InputPage() {
   function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (photoUrl) URL.revokeObjectURL(photoUrl)
     setPhotoFile(file)
     setPhotoUrl(URL.createObjectURL(file))
   }
+
+  useEffect(() => {
+    return () => { if (photoUrl) URL.revokeObjectURL(photoUrl) }
+  }, [photoUrl])
 
   function canContinue() {
     if (mode === 'text') return text.trim().length > 0
@@ -82,10 +88,11 @@ export default function InputPage() {
         const b64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = () => resolve(reader.result as string)
-          reader.onerror = reject
+          reader.onerror = () => reject(new Error('FileReader failed'))
           reader.readAsDataURL(blob)
         })
         sessionStorage.setItem('photo_blob_b64', b64)
+        setExporting(false)
         router.push('/submit/confirm?mode=photo')
       } catch {
         setError('Could not export photo. Please try again.')
@@ -99,6 +106,8 @@ export default function InputPage() {
     if (mode === 'voice') params.set('transcript', transcript)
     router.push(`/submit/confirm?${params.toString()}`)
   }, [mode, text, transcript, router])
+
+  const ok = canContinue()
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
     flex: 1, padding: '10px 0', fontSize: 13,
@@ -199,13 +208,13 @@ export default function InputPage() {
 
       <button
         onClick={handleContinue}
-        disabled={!canContinue() || exporting}
+        disabled={!ok || exporting}
         style={{
           marginTop: 32, width: '100%', minHeight: 'var(--touch)',
-          background: canContinue() && !exporting ? 'var(--violet)' : 'var(--surface)',
-          color: canContinue() && !exporting ? '#fff' : 'var(--ink-faint)',
+          background: ok && !exporting ? 'var(--violet)' : 'var(--surface)',
+          color: ok && !exporting ? '#fff' : 'var(--ink-faint)',
           border: 'none', borderRadius: 14, fontSize: 15,
-          cursor: canContinue() && !exporting ? 'pointer' : 'not-allowed',
+          cursor: ok && !exporting ? 'pointer' : 'not-allowed',
         }}
       >
         {exporting ? 'Preparing…' : 'Continue'}
