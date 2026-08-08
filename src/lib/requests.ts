@@ -11,6 +11,7 @@ export async function createRequest(
     raw_text?: string
     media_url?: string
     transcript?: string
+    photo_url?: string
   }
 ): Promise<CreativeRequest> {
   const { data, error } = await supabase
@@ -24,6 +25,7 @@ export async function createRequest(
       raw_text: params.raw_text ?? null,
       media_url: params.media_url ?? null,
       transcript: params.transcript ?? null,
+      photo_url: params.photo_url ?? null,
     })
     .select()
     .single()
@@ -103,6 +105,21 @@ export async function getRequestDraft(
 
   if (error) throw new Error(error.message)
   return data as RequestDraft | null
+}
+
+export async function getReviewerHistory(
+  supabase: SupabaseClient,
+  reviewerId: string
+): Promise<CreativeRequest[]> {
+  const { data, error } = await supabase
+    .from('creative_requests')
+    .select('*')
+    .eq('reviewer_id', reviewerId)
+    .in('status', ['approved', 'changes_requested', 'declined', 'delivered'])
+    .order('updated_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as CreativeRequest[]
 }
 
 export async function getReviewerTemplates(

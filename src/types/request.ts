@@ -24,6 +24,7 @@ export interface CreativeRequest {
   intent_summary: string | null
   clarification_question: string | null
   contributor_reply: string | null
+  photo_url: string | null
   created_at: string
   updated_at: string
 }
