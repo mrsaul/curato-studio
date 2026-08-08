@@ -25,6 +25,30 @@ async function callClaude(prompt: string): Promise<string> {
   return data.content.find(b => b.type === 'text')?.text ?? ''
 }
 
+type ClaudeMessageContent =
+  | { type: 'text'; text: string }
+  | { type: 'image'; source: { type: 'url'; url: string } }
+
+async function callClaudeWithMessages(content: string | ClaudeMessageContent[]): Promise<string> {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_API_KEY!,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content }],
+    }),
+    signal: AbortSignal.timeout(45_000),
+  })
+  if (!response.ok) throw new Error(`Claude error: ${response.status}`)
+  const data = await response.json() as { content: Array<{ type: string; text: string }> }
+  return data.content.find(b => b.type === 'text')?.text ?? ''
+}
+
 function parseJson<T>(raw: string): T {
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim()
   return JSON.parse(cleaned) as T
@@ -107,8 +131,15 @@ Return JSON only:
     visual_brief: string
   }
 
+  const captionContent: string | ClaudeMessageContent[] = request.photo_url
+    ? [
+        { type: 'image', source: { type: 'url', url: request.photo_url } },
+        { type: 'text', text: captionPrompt },
+      ]
+    : captionPrompt
+
   const [captionRaw, templateRaw] = await Promise.all([
-    callClaude(captionPrompt),
+    callClaudeWithMessages(captionContent),
     callClaude(templatePrompt),
   ])
 
