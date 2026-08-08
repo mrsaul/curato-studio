@@ -27,8 +27,11 @@ export default function CaptionPicker({
         const isSelected = selectedIndex === i
         return (
           <div
-            key={i}
+            key={opt.style}
             onClick={() => setSelectedIndex(i)}
+            tabIndex={0}
+            role="button"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedIndex(i) }}
             style={{
               background: isSelected ? 'var(--bg)' : 'var(--surface)',
               borderRadius: 10,
