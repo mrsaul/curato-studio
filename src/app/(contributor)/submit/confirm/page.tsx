@@ -17,25 +17,35 @@ function ConfirmContent() {
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
   const [photoMissing, setPhotoMissing] = useState(false)
+  const [photoMimeType, setPhotoMimeType] = useState<string>('image/jpeg')
 
   useEffect(() => {
+    let mounted = true
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) { router.replace('/login'); return }
-      fetch('/api/reviewer')
-        .then(r => r.json())
-        .then((json: { reviewer?: { id: string; context_id: string } }) => {
-          if (json.reviewer) {
-            setReviewerId(json.reviewer.id)
-            setContextId(json.reviewer.context_id)
-          }
-        })
-    })
+    supabase.auth.getUser()
+      .then(({ data }) => {
+        if (!mounted) return
+        if (!data.user) { router.replace('/login'); return }
+        return fetch('/api/reviewer')
+          .then(r => r.json())
+          .then((json: { reviewer?: { id: string; context_id: string } }) => {
+            if (!mounted) return
+            if (json.reviewer) {
+              setReviewerId(json.reviewer.id)
+              setContextId(json.reviewer.context_id)
+            } else {
+              setError('No reviewer found for your account')
+            }
+          })
+      })
+      .catch(() => {
+        if (mounted) setError('Could not load reviewer — please try again')
+      })
 
     if (mode === 'photo') {
       const b64 = sessionStorage.getItem('photo_blob_b64')
       if (!b64) {
-        setPhotoMissing(true)
+        if (mounted) setPhotoMissing(true)
         return
       }
       try {
@@ -46,13 +56,17 @@ function ConfirmContent() {
         const ia = new Uint8Array(ab)
         for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i)
         const blob = new Blob([ab], { type: mime })
+        if (!mounted) return
+        setPhotoMimeType(mime)
         setPhotoBlob(blob)
         const url = URL.createObjectURL(blob)
         setPhotoPreviewUrl(url)
       } catch {
-        setPhotoMissing(true)
+        if (mounted) setPhotoMissing(true)
       }
     }
+
+    return () => { mounted = false }
   }, [mode, router])
 
   useEffect(() => {
@@ -70,10 +84,11 @@ function ConfirmContent() {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error('Not authenticated')
-        const filename = `${user.id}/${crypto.randomUUID()}.jpg`
+        const ext = photoMimeType.split('/')[1] ?? 'jpg'
+        const filename = `${user.id}/${crypto.randomUUID()}.${ext}`
         const { error: uploadError } = await supabase.storage
           .from('post-photos')
-          .upload(filename, photoBlob, { contentType: 'image/jpeg', upsert: false })
+          .upload(filename, photoBlob, { contentType: photoMimeType, upsert: false })
         if (uploadError) throw new Error('Photo upload failed: ' + uploadError.message)
         const { data: { publicUrl } } = supabase.storage
           .from('post-photos')
@@ -116,6 +131,7 @@ function ConfirmContent() {
       }
 
       sessionStorage.removeItem('photo_blob_b64')
+      setLoading(false)
       router.push(`/submit/sent?id=${requestId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
@@ -161,7 +177,7 @@ function ConfirmContent() {
           </p>
           <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginBottom: 28 }}>
             <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>
-              {inputSummary || `${mode} input`}
+              {inputSummary || (mode ? `${mode} input` : 'input')}
             </p>
           </div>
         </>
