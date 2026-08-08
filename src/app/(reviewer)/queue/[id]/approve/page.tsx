@@ -27,9 +27,10 @@ export default async function ApprovePage({
   if (!draft) redirect(`/queue/${params.id}`)
 
   const rawIndex = parseInt(searchParams.option ?? '0', 10)
-  const optionIndex = isNaN(rawIndex)
-    ? 0
-    : Math.min(Math.max(rawIndex, 0), draft.caption_options.length - 1)
+  const optionIndex =
+    isNaN(rawIndex) || rawIndex < 0 || rawIndex >= draft.caption_options.length
+      ? 0
+      : rawIndex
 
   const initialCaption =
     draft.caption_options[optionIndex]?.text ?? draft.recommended_caption ?? ''
