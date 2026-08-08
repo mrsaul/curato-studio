@@ -70,7 +70,7 @@ export default function ApproveActions({
         body: JSON.stringify({
           request_id: requestId,
           decision,
-          edited_caption: caption !== initialCaption ? caption : undefined,
+          ...(decision === 'approved' ? { edited_caption: caption } : {}),
           notes: notes.trim() || undefined,
         }),
       })
@@ -182,7 +182,7 @@ export default function ApproveActions({
         style={{
           width: '100%',
           minHeight: 'var(--touch)',
-          borderRadius: 14,
+          borderRadius: 100,
           background: 'var(--green)',
           color: '#fff',
           border: 'none',
