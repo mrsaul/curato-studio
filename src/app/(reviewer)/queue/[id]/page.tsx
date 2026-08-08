@@ -30,6 +30,24 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         Queue
       </Link>
 
+      {/* Photo (if present) */}
+      {request.photo_url && (
+        <section style={{ marginBottom: 24 }}>
+          <p style={{
+            fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+            textTransform: 'uppercase', marginBottom: 8,
+          }}>
+            Photo
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={request.photo_url}
+            alt="Creator photo"
+            style={{ width: '100%', borderRadius: 10, maxHeight: 400, objectFit: 'cover', display: 'block' }}
+          />
+        </section>
+      )}
+
       {/* Original input */}
       <section style={{ marginBottom: 24 }}>
         <p style={{
