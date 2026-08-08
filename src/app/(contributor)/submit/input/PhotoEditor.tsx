@@ -94,6 +94,10 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
   const [contrast, setContrast] = useState(0)
   const [overlayText, setOverlayText] = useState('')
 
+  // Keep ref in sync with latest state so triggerExport() never reads stale values
+  const stateRef = useRef({ imageEl, aspectRatio, rotation, filter, brightness, contrast, overlayText })
+  stateRef.current = { imageEl, aspectRatio, rotation, filter, brightness, contrast, overlayText }
+
   useEffect(() => {
     let cancelled = false
     const img = new Image()
@@ -116,7 +120,7 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
     const base = FILTER_CSS[filter]
     const brightnessVal = 1 + brightness / 100
     const contrastVal = 1 + contrast / 100
-    ctx.filter = base === 'none'
+    const filterString = base === 'none'
       ? `brightness(${brightnessVal}) contrast(${contrastVal})`
       : `${base} brightness(${brightnessVal}) contrast(${contrastVal})`
 
@@ -129,6 +133,7 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
     const scale = Math.max(w / srcW, h / srcH)
     const drawW = srcW * scale
     const drawH = srcH * scale
+    ctx.filter = filterString
     ctx.drawImage(imageEl, -drawW / 2, -drawH / 2, drawW, drawH)
     ctx.restore()
 
@@ -162,9 +167,51 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
 
   useImperativeHandle(ref, () => ({
     triggerExport: () => new Promise<Blob>((resolve, reject) => {
-      const canvas = canvasRef.current
-      if (!canvas) { reject(new Error('Canvas not ready')); return }
-      canvas.toBlob(blob => {
+      const { imageEl, aspectRatio, rotation, filter, brightness, contrast, overlayText } = stateRef.current
+      if (!imageEl) { reject(new Error('Image not ready')); return }
+
+      const { w, h } = getCanvasDimensions(imageEl, aspectRatio)
+      const offCanvas = document.createElement('canvas')
+      offCanvas.width = w
+      offCanvas.height = h
+      const ctx = offCanvas.getContext('2d')
+      if (!ctx) { reject(new Error('Canvas context unavailable')); return }
+
+      const base = FILTER_CSS[filter]
+      const brightnessVal = 1 + brightness / 100
+      const contrastVal = 1 + contrast / 100
+      const filterString = base === 'none'
+        ? `brightness(${brightnessVal}) contrast(${contrastVal})`
+        : `${base} brightness(${brightnessVal}) contrast(${contrastVal})`
+
+      const isRotated90 = rotation % 180 !== 0
+      const srcW = isRotated90 ? imageEl.naturalHeight : imageEl.naturalWidth
+      const srcH = isRotated90 ? imageEl.naturalWidth : imageEl.naturalHeight
+      const scale = Math.max(w / srcW, h / srcH)
+      const drawW = srcW * scale
+      const drawH = srcH * scale
+
+      ctx.save()
+      ctx.translate(w / 2, h / 2)
+      ctx.rotate((rotation * Math.PI) / 180)
+      ctx.filter = filterString
+      ctx.drawImage(imageEl, -drawW / 2, -drawH / 2, drawW, drawH)
+      ctx.restore()
+
+      if (overlayText.trim()) {
+        ctx.filter = 'none'
+        const fontSize = Math.round(w / 18)
+        ctx.font = `bold ${fontSize}px sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'bottom'
+        ctx.shadowColor = 'rgba(0,0,0,0.8)'
+        ctx.shadowBlur = 6
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText(overlayText, w / 2, h - fontSize * 0.5)
+        ctx.shadowBlur = 0
+      }
+
+      offCanvas.toBlob(blob => {
         if (blob) resolve(blob)
         else reject(new Error('Export failed'))
       }, 'image/jpeg', 0.85)
