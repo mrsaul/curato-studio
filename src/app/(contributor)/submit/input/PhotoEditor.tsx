@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react'
 
 type AspectRatio = 'free' | '1:1' | '4:5' | '9:16'
 type FilterName = 'original' | 'warm' | 'cool' | 'vivid' | 'muted' | 'bw'
@@ -50,6 +50,36 @@ function getCanvasDimensions(img: HTMLImageElement, ratio: AspectRatio): { w: nu
   }
 }
 
+const TOOL_ICONS: Record<ActiveTool, ReactNode> = {
+  crop: (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2v14a2 2 0 002 2h14"/>
+      <path d="M18 22V8a2 2 0 00-2-2H2"/>
+    </svg>
+  ),
+  filter: (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <circle cx="12" cy="6" r="2"/><line x1="2" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="22" y2="6"/>
+      <circle cx="8" cy="12" r="2"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="22" y2="12"/>
+      <circle cx="16" cy="18" r="2"/><line x1="2" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="22" y2="18"/>
+    </svg>
+  ),
+  light: (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <circle cx="12" cy="12" r="4"/>
+      <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  ),
+  text: (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>
+    </svg>
+  ),
+}
+
 const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function PhotoEditor(
   { sourceUrl },
   ref
@@ -65,9 +95,12 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
   const [overlayText, setOverlayText] = useState('')
 
   useEffect(() => {
+    let cancelled = false
     const img = new Image()
-    img.onload = () => setImageEl(img)
+    img.onload = () => { if (!cancelled) setImageEl(img) }
+    img.onerror = () => { if (!cancelled) setImageEl(null) }
     img.src = sourceUrl
+    return () => { cancelled = true }
   }, [sourceUrl])
 
   const drawCanvas = useCallback(() => {
@@ -136,37 +169,7 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
         else reject(new Error('Export failed'))
       }, 'image/jpeg', 0.85)
     }),
-  }))
-
-  const TOOL_ICONS: Record<ActiveTool, React.ReactNode> = {
-    crop: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 2v14a2 2 0 002 2h14"/>
-        <path d="M18 22V8a2 2 0 00-2-2H2"/>
-      </svg>
-    ),
-    filter: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="12" cy="6" r="2"/><line x1="2" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="22" y2="6"/>
-        <circle cx="8" cy="12" r="2"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="22" y2="12"/>
-        <circle cx="16" cy="18" r="2"/><line x1="2" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="22" y2="18"/>
-      </svg>
-    ),
-    light: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="12" cy="12" r="4"/>
-        <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-    ),
-    text: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>
-      </svg>
-    ),
-  }
+  }), [])
 
   const toolTab = (t: ActiveTool, label: string) => (
     <button
