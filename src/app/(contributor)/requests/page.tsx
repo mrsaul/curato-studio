@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getContributorRequests } from '@/lib/requests'
 import { CreativeRequest, RequestStatus } from '@/types/request'
+import RequestReplyForm from './RequestReplyForm'
 
 const STATUS_LABEL: Record<RequestStatus, string> = {
   new: 'Received',
@@ -51,14 +52,7 @@ function RequestCard({ request }: { request: CreativeRequest }) {
         </span>
       </div>
       {request.status === 'needs_info' && request.clarification_question && (
-        <div style={{
-          marginTop: 10, padding: '10px 12px', background: 'var(--bg)',
-          borderRadius: 8, border: '1px solid var(--line-soft)',
-        }}>
-          <p style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
-            {request.clarification_question}
-          </p>
-        </div>
+        <RequestReplyForm requestId={request.id} question={request.clarification_question} />
       )}
     </div>
   )
