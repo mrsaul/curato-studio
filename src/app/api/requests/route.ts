@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     raw_text?: string
     transcript?: string
     media_url?: string
+    photo_url?: string
   }
 
   if (!body.reviewer_id) {
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
     raw_text: body.raw_text,
     transcript: body.transcript,
     media_url: body.media_url,
+    photo_url: body.photo_url ?? undefined,
   })
 
   return NextResponse.json({ request })
