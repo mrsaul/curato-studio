@@ -68,6 +68,41 @@ Return a JSON object with these exact fields (no markdown, raw JSON only):
   "confirmation_sentence": "string — begins with 'Here\\'s what I\\'ll make: '"
 }`
 
+  type ClaudeContent =
+    | { type: 'text'; text: string }
+    | { type: 'image'; source: { type: 'url'; url: string } }
+
+  let model: string
+  let messageContent: string | ClaudeContent[]
+
+  if (request.photo_url) {
+    model = 'claude-haiku-4-5-20251001'
+    const visionPromptText = `The creator wants to post this photo to Instagram.${input ? ` Their description: "${input}"` : ''}
+${brandSystem ? `\nBrand context:\n${brandSystem}` : ''}
+
+Analyze the photo carefully. Return a JSON object with these exact fields (no markdown, raw JSON only):
+{
+  "source_summary": "string — describe what's in the photo in plain terms",
+  "intent": "string — one of: promote, inform, celebrate, invite, reflect, sell, other",
+  "subject": "string — what or who the post is about",
+  "confirmed_facts": ["string"],
+  "uncertain_facts": ["string"],
+  "suggested_audience": "string",
+  "likely_cta": "string",
+  "emotional_tone": "string",
+  "recommended_format": "string — one of: photo_post, quote_card, announcement, carousel",
+  "clarification_question": "string or null — one question only if a missing fact prevents a useful draft, else null",
+  "confirmation_sentence": "string — begins with 'Here\\'s what I\\'ll make: '"
+}`
+    messageContent = [
+      { type: 'image', source: { type: 'url', url: request.photo_url } },
+      { type: 'text', text: visionPromptText },
+    ]
+  } else {
+    model = 'claude-sonnet-4-6'
+    messageContent = prompt
+  }
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -76,9 +111,9 @@ Return a JSON object with these exact fields (no markdown, raw JSON only):
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model,
       max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: messageContent }],
     }),
     signal: AbortSignal.timeout(30_000),
   })
