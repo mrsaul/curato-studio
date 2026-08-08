@@ -1,7 +1,9 @@
+// src/app/(reviewer)/queue/[id]/page.tsx
 import { redirect, notFound } from 'next/navigation'
+import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getRequest, getRequestDraft } from '@/lib/requests'
-import ReviewActions from './ReviewActions'
+import CaptionPicker from './CaptionPicker'
 
 export default async function RequestDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerSupabaseClient()
@@ -15,92 +17,144 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
   return (
     <div style={{ paddingTop: 24, paddingBottom: 32 }}>
+      {/* Back */}
+      <Link href="/queue" style={{
+        fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+        textDecoration: 'none', display: 'inline-flex', alignItems: 'center',
+        gap: 6, marginBottom: 20,
+      }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        Queue
+      </Link>
+
       {/* Original input */}
       <section style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', textTransform: 'uppercase', marginBottom: 8 }}>
+        <p style={{
+          fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+          textTransform: 'uppercase', marginBottom: 8,
+        }}>
           Original — {request.source_type}
         </p>
         <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '12px 14px' }}>
-          <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>
-            {request.transcript ?? request.raw_text ?? '(media)'}
+          <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, margin: 0 }}>
+            {request.transcript ?? request.raw_text ?? '(media upload)'}
           </p>
         </div>
       </section>
 
-      {/* Claude's interpretation */}
+      {/* Interpretation */}
       {request.intent_summary && (
         <section style={{ marginBottom: 24 }}>
-          <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', textTransform: 'uppercase', marginBottom: 8 }}>
+          <p style={{
+            fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+            textTransform: 'uppercase', marginBottom: 8,
+          }}>
             Interpretation
           </p>
-          <p style={{ fontSize: 14, color: 'var(--violet)', lineHeight: 1.5 }}>
+          <p style={{ fontSize: 14, color: 'var(--violet)', lineHeight: 1.5, margin: 0 }}>
             {request.intent_summary}
           </p>
         </section>
       )}
 
-      {/* Draft */}
+      {/* Caption picker / draft state */}
       {draft ? (
         <>
           <section style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', textTransform: 'uppercase', marginBottom: 8 }}>
-              Caption options
+            <p style={{
+              fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+              textTransform: 'uppercase', marginBottom: 8,
+            }}>
+              Caption options — pick one
             </p>
-            {draft.caption_options.map((opt, i) => (
-              <div key={i} style={{
-                background: opt.style === 'warm' ? 'var(--surface)' : 'var(--bg)',
-                borderRadius: 10, padding: '12px 14px', marginBottom: 8,
-                border: draft.recommended_caption === opt.text ? '2px solid var(--violet)' : '1px solid var(--line-soft)',
-              }}>
-                <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', marginBottom: 4, textTransform: 'uppercase' }}>
-                  {opt.style}{draft.recommended_caption === opt.text ? ' ← recommended' : ''}
+            {request.status === 'awaiting_review' ? (
+              <CaptionPicker
+                requestId={request.id}
+                options={draft.caption_options}
+                recommendedCaption={draft.recommended_caption}
+              />
+            ) : (
+              <>
+                {draft.caption_options.map((opt, i) => (
+                  <div key={i} style={{
+                    background: draft.recommended_caption === opt.text ? 'var(--bg)' : 'var(--surface)',
+                    borderRadius: 10, padding: '12px 14px', marginBottom: 8,
+                    border: draft.recommended_caption === opt.text
+                      ? '2px solid var(--violet)' : '1px solid var(--line-soft)',
+                  }}>
+                    <p style={{
+                      fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+                      textTransform: 'uppercase', marginBottom: 4, margin: '0 0 4px',
+                    }}>
+                      {opt.style}{draft.recommended_caption === opt.text ? ' · recommended' : ''}
+                    </p>
+                    <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink)', margin: 0 }}>
+                      {opt.text}
+                    </p>
+                  </div>
+                ))}
+                <p style={{
+                  fontSize: 14, color: 'var(--ink-faint)', textAlign: 'center', marginTop: 16,
+                }}>
+                  This request is {request.status}.
                 </p>
-                <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink)' }}>{opt.text}</p>
-              </div>
-            ))}
+              </>
+            )}
           </section>
 
+          {/* CTA */}
           {draft.cta && (
             <section style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', textTransform: 'uppercase', marginBottom: 6 }}>CTA</p>
-              <p style={{ fontSize: 14, color: 'var(--ink)' }}>{draft.cta}</p>
+              <p style={{
+                fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+                textTransform: 'uppercase', marginBottom: 6,
+              }}>CTA</p>
+              <p style={{ fontSize: 14, color: 'var(--ink)', margin: 0 }}>{draft.cta}</p>
             </section>
           )}
 
+          {/* Hashtags */}
           {draft.hashtags.length > 0 && (
             <section style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', textTransform: 'uppercase', marginBottom: 6 }}>Hashtags</p>
-              <p style={{ fontSize: 13, color: 'var(--ink-soft)' }}>{draft.hashtags.join(' ')}</p>
+              <p style={{
+                fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+                textTransform: 'uppercase', marginBottom: 6,
+              }}>Hashtags</p>
+              <p style={{ fontSize: 13, color: 'var(--ink-soft)', margin: 0 }}>
+                {draft.hashtags.map(h => `#${h}`).join(' ')}
+              </p>
             </section>
           )}
 
+          {/* Visual brief */}
           {draft.visual_brief && (
             <section style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', textTransform: 'uppercase', marginBottom: 6 }}>Visual brief</p>
-              <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.5 }}>{draft.visual_brief}</p>
+              <p style={{
+                fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+                textTransform: 'uppercase', marginBottom: 6,
+              }}>Visual brief</p>
+              <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>
+                {draft.visual_brief}
+              </p>
             </section>
           )}
 
+          {/* Flags */}
           {draft.flags.length > 0 && (
             <section style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--amber)', textTransform: 'uppercase', marginBottom: 6 }}>Flags</p>
+              <p style={{
+                fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--amber)',
+                textTransform: 'uppercase', marginBottom: 6,
+              }}>Flags</p>
               {draft.flags.map((f, i) => (
                 <p key={i} style={{ fontSize: 13, color: 'var(--amber)', marginBottom: 4 }}>
                   {f.type}: {f.note}
                 </p>
               ))}
             </section>
-          )}
-
-          {/* Review actions (client component) */}
-          {request.status === 'awaiting_review' && (
-            <ReviewActions requestId={request.id} defaultCaption={draft.recommended_caption ?? draft.caption_options[0]?.text ?? ''} />
-          )}
-
-          {request.status !== 'awaiting_review' && (
-            <p style={{ fontSize: 14, color: 'var(--ink-faint)', textAlign: 'center', marginTop: 24 }}>
-              This request is {request.status}.
-            </p>
           )}
         </>
       ) : (
