@@ -279,7 +279,20 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
       ctx.fillText(overlayText, w / 2, h - fontSize * 0.5)
       ctx.shadowBlur = 0
     }
-  }, [imageEl, aspectRatio, rotation, filter, brightness, contrast, overlayText])
+
+    // Rule-of-thirds grid (only in crop mode)
+    if (activeTool === 'crop') {
+      ctx.filter = 'none'
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+      ctx.lineWidth = 0.75
+      ctx.beginPath()
+      ctx.moveTo(w / 3, 0); ctx.lineTo(w / 3, h)
+      ctx.moveTo((w * 2) / 3, 0); ctx.lineTo((w * 2) / 3, h)
+      ctx.moveTo(0, h / 3); ctx.lineTo(w, h / 3)
+      ctx.moveTo(0, (h * 2) / 3); ctx.lineTo(w, (h * 2) / 3)
+      ctx.stroke()
+    }
+  }, [imageEl, aspectRatio, rotation, filter, brightness, contrast, overlayText, activeTool])
 
   useEffect(() => { drawCanvas() }, [drawCanvas])
 
@@ -294,97 +307,134 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
     }),
   }))
 
+  // SVG icons for tool tabs — minimal line art, same style as Lightroom Mobile
+  const TOOL_ICONS: Record<ActiveTool, React.ReactNode> = {
+    crop: (
+      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2v14a2 2 0 002 2h14"/>
+        <path d="M18 22V8a2 2 0 00-2-2H2"/>
+      </svg>
+    ),
+    filter: (
+      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+        <circle cx="12" cy="6" r="2"/><line x1="2" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="22" y2="6"/>
+        <circle cx="8" cy="12" r="2"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="22" y2="12"/>
+        <circle cx="16" cy="18" r="2"/><line x1="2" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="22" y2="18"/>
+      </svg>
+    ),
+    light: (
+      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+        <circle cx="12" cy="12" r="4"/>
+        <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    ),
+    text: (
+      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>
+      </svg>
+    ),
+  }
+
   const toolTab = (t: ActiveTool, label: string) => (
     <button
       key={t}
       onClick={() => setActiveTool(t)}
       style={{
-        flex: 1, padding: '8px 0', fontSize: 11, letterSpacing: '0.06em',
-        background: activeTool === t ? '#fff' : 'var(--surface)',
+        flex: 1, padding: '10px 0 8px', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', gap: 4,
+        background: 'var(--surface)',
         color: activeTool === t ? 'var(--violet)' : 'var(--ink-soft)',
         border: 'none', cursor: 'pointer',
-        borderBottom: activeTool === t ? '2px solid var(--violet)' : '2px solid transparent',
-        fontFamily: 'var(--mono)',
+        borderTop: activeTool === t ? '2px solid var(--violet)' : '2px solid transparent',
       }}
     >
-      {label}
+      {TOOL_ICONS[t]}
+      <span style={{ fontSize: 9, letterSpacing: '0.07em', fontFamily: 'var(--mono)', textTransform: 'uppercase' }}>
+        {label}
+      </span>
     </button>
   )
 
   return (
     <div style={{ width: '100%' }}>
-      {/* Canvas preview */}
-      <div style={{ background: '#1A1714', display: 'flex', justifyContent: 'center', borderRadius: '10px 10px 0 0', overflow: 'hidden' }}>
+      {/* Canvas preview — dark letterbox background like native camera apps */}
+      <div style={{ background: '#111', display: 'flex', justifyContent: 'center', borderRadius: '10px 10px 0 0', overflow: 'hidden', minHeight: 240 }}>
         <canvas
           ref={canvasRef}
-          style={{ width: '100%', maxHeight: 320, objectFit: 'contain', display: 'block' }}
+          style={{ width: '100%', maxHeight: 340, objectFit: 'contain', display: 'block' }}
         />
       </div>
 
-      {/* Tool tabs */}
-      <div style={{ display: 'flex', background: 'var(--surface)', borderBottom: '1px solid var(--line-soft)' }}>
-        {toolTab('crop', 'CROP')}
-        {toolTab('filter', 'FILTER')}
-        {toolTab('light', 'LIGHT')}
-        {toolTab('text', 'TEXT')}
+      {/* Tool tabs — icon + label, indicator on top border (Lightroom Mobile pattern) */}
+      <div style={{ display: 'flex', background: 'var(--surface)' }}>
+        {toolTab('crop', 'Crop')}
+        {toolTab('filter', 'Filter')}
+        {toolTab('light', 'Light')}
+        {toolTab('text', 'Text')}
       </div>
 
       {/* Tool panels */}
-      <div style={{ background: 'var(--surface)', padding: 14, borderRadius: '0 0 10px 10px', border: '1px solid var(--line-soft)', borderTop: 'none' }}>
+      <div style={{ background: 'var(--surface)', padding: '14px 14px 18px', borderRadius: '0 0 10px 10px', border: '1px solid var(--line-soft)', borderTop: '1px solid var(--line-soft)' }}>
 
         {activeTool === 'crop' && (
           <div>
-            <p style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Aspect ratio</p>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            <p style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Aspect ratio</p>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
               {ASPECT_LABELS.map(r => (
                 <button
                   key={r}
                   onClick={() => setAspectRatio(r)}
                   style={{
-                    flex: 1, padding: '6px 0', fontSize: 11, borderRadius: 6,
-                    background: aspectRatio === r ? 'var(--violet)' : '#fff',
+                    flex: 1, padding: '7px 0', fontSize: 11, borderRadius: 8,
+                    background: aspectRatio === r ? 'var(--violet)' : 'var(--bg)',
                     color: aspectRatio === r ? '#fff' : 'var(--ink-soft)',
-                    border: '1.5px solid var(--line-soft)', cursor: 'pointer',
+                    border: aspectRatio === r ? '1.5px solid var(--violet)' : '1.5px solid var(--line-soft)',
+                    cursor: 'pointer', fontWeight: aspectRatio === r ? 600 : 400,
                   }}
                 >
                   {r === 'free' ? 'Free' : r}
                 </button>
               ))}
             </div>
+            {/* Rotate buttons — icon glyphs, same row */}
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => setRotation(r => (r - 90 + 360) % 360)}
-                style={{ flex: 1, padding: '7px 0', fontSize: 11, borderRadius: 6, background: '#fff', border: '1px solid var(--line-soft)', cursor: 'pointer', color: 'var(--ink-soft)' }}
+                style={{ flex: 1, padding: '8px 0', fontSize: 13, borderRadius: 8, background: 'var(--bg)', border: '1px solid var(--line-soft)', cursor: 'pointer', color: 'var(--ink-soft)' }}
               >
-                ↺ Rotate left
+                ↺ Left
               </button>
               <button
                 onClick={() => setRotation(r => (r + 90) % 360)}
-                style={{ flex: 1, padding: '7px 0', fontSize: 11, borderRadius: 6, background: '#fff', border: '1px solid var(--line-soft)', cursor: 'pointer', color: 'var(--ink-soft)' }}
+                style={{ flex: 1, padding: '8px 0', fontSize: 13, borderRadius: 8, background: 'var(--bg)', border: '1px solid var(--line-soft)', cursor: 'pointer', color: 'var(--ink-soft)' }}
               >
-                ↻ Rotate right
+                ↻ Right
               </button>
             </div>
           </div>
         )}
 
         {activeTool === 'filter' && (
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+          /* Horizontally scrollable filter strip — circular thumbnails + name below (VSCO pattern) */
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'] }}>
             {(Object.keys(FILTER_CSS) as FilterName[]).map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 style={{
-                  flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                  flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                 }}
               >
-                <FilterChip
-                  imageEl={imageEl}
-                  filterCss={FILTER_CSS[f]}
-                  active={filter === f}
-                />
-                <span style={{ fontSize: 10, color: filter === f ? 'var(--violet)' : 'var(--ink-soft)' }}>
+                <FilterChip imageEl={imageEl} filterCss={FILTER_CSS[f]} active={filter === f} />
+                <span style={{
+                  fontSize: 10, fontFamily: 'var(--mono)',
+                  color: filter === f ? 'var(--violet)' : 'var(--ink-faint)',
+                  fontWeight: filter === f ? 600 : 400,
+                }}>
                   {FILTER_LABELS[f]}
                 </span>
               </button>
@@ -393,39 +443,48 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
         )}
 
         {activeTool === 'light' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 11, color: 'var(--ink-soft)', display: 'flex', justifyContent: 'space-between' }}>
-                <span>Brightness</span><span style={{ fontFamily: 'var(--mono)' }}>{brightness > 0 ? `+${brightness}` : brightness}</span>
-              </span>
-              <input type="range" min={-50} max={50} step={1} value={brightness}
-                onChange={e => setBrightness(Number(e.target.value))}
-                style={{ accentColor: 'var(--violet)' }}
-              />
-            </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 11, color: 'var(--ink-soft)', display: 'flex', justifyContent: 'space-between' }}>
-                <span>Contrast</span><span style={{ fontFamily: 'var(--mono)' }}>{contrast > 0 ? `+${contrast}` : contrast}</span>
-              </span>
-              <input type="range" min={-50} max={50} step={1} value={contrast}
-                onChange={e => setContrast(Number(e.target.value))}
-                style={{ accentColor: 'var(--violet)' }}
-              />
-            </label>
+          /* Slider rows — label left, value right, full-width track (Lightroom Mobile pattern) */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {([
+              { label: 'Brightness', value: brightness, setter: setBrightness },
+              { label: 'Contrast',   value: contrast,   setter: setContrast },
+            ] as const).map(({ label, value, setter }) => (
+              <div key={label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{label}</span>
+                  <span style={{ fontSize: 12, fontFamily: 'var(--mono)', color: value !== 0 ? 'var(--violet)' : 'var(--ink-faint)', minWidth: 32, textAlign: 'right' }}>
+                    {value > 0 ? `+${value}` : value}
+                  </span>
+                </div>
+                <input
+                  type="range" min={-50} max={50} step={1} value={value}
+                  onChange={e => setter(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: 'var(--violet)', height: 4 }}
+                />
+              </div>
+            ))}
           </div>
         )}
 
         {activeTool === 'text' && (
-          <input
-            type="text"
-            value={overlayText}
-            onChange={e => setOverlayText(e.target.value)}
-            placeholder="Add text to photo…"
-            style={{
-              width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid var(--line-soft)',
-              background: '#fff', color: 'var(--ink)', fontSize: 14, fontFamily: 'var(--body)', outline: 'none',
-            }}
-          />
+          <div>
+            <p style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Overlay text</p>
+            <input
+              type="text"
+              value={overlayText}
+              onChange={e => setOverlayText(e.target.value)}
+              placeholder="Add text to photo…"
+              style={{
+                width: '100%', padding: '11px 14px', borderRadius: 10,
+                border: '1.5px solid var(--line-soft)',
+                background: 'var(--bg)', color: 'var(--ink)', fontSize: 15,
+                fontFamily: 'var(--body)', outline: 'none',
+              }}
+            />
+            <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 8 }}>
+              Text appears centered at the bottom of the photo.
+            </p>
+          </div>
         )}
       </div>
     </div>
@@ -434,7 +493,7 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
 
 export default PhotoEditor
 
-// FilterChip: tiny 56×56 canvas showing photo with a specific filter applied
+// FilterChip — circular thumbnail (VSCO pattern), 60×60, active state = violet ring
 function FilterChip({
   imageEl,
   filterCss,
@@ -445,28 +504,30 @@ function FilterChip({
   active: boolean
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
+  const SIZE = 60
 
   useEffect(() => {
     const canvas = ref.current
     const ctx = canvas?.getContext('2d')
     if (!ctx || !imageEl || !canvas) return
-    canvas.width = 56
-    canvas.height = 56
+    canvas.width = SIZE
+    canvas.height = SIZE
     ctx.filter = filterCss === 'none' ? 'none' : filterCss
-    const scale = Math.max(56 / imageEl.naturalWidth, 56 / imageEl.naturalHeight)
+    const scale = Math.max(SIZE / imageEl.naturalWidth, SIZE / imageEl.naturalHeight)
     const drawW = imageEl.naturalWidth * scale
     const drawH = imageEl.naturalHeight * scale
-    ctx.drawImage(imageEl, (56 - drawW) / 2, (56 - drawH) / 2, drawW, drawH)
+    ctx.drawImage(imageEl, (SIZE - drawW) / 2, (SIZE - drawH) / 2, drawW, drawH)
   }, [imageEl, filterCss])
 
   return (
     <canvas
       ref={ref}
-      width={56}
-      height={56}
+      width={SIZE}
+      height={SIZE}
       style={{
-        borderRadius: 6,
-        border: active ? '2px solid var(--violet)' : '2px solid transparent',
+        borderRadius: '50%',                                           // circular — VSCO pattern
+        border: active ? '2.5px solid var(--violet)' : '2.5px solid transparent',
+        outline: active ? '1.5px solid rgba(74,61,176,0.25)' : 'none', // subtle outer glow ring
         display: 'block',
       }}
     />
