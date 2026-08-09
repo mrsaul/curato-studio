@@ -52,7 +52,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const brand = await getOwnedBrand(supabase, id, user.id)
   if (!brand) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const body = await req.json() as { name?: string; description?: string }
+  let body: { name?: string; description?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
   const updates: Record<string, string> = {}
   if (body.name?.trim()) updates.name = body.name.trim()
   if (body.description !== undefined) updates.description = body.description.trim()
@@ -77,6 +82,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const brand = await getOwnedBrand(supabase, id, user.id)
   if (!brand) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  await supabase.from('contexts').delete().eq('id', id)
+  const { error } = await supabase.from('contexts').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: 'Failed to delete brand' }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
