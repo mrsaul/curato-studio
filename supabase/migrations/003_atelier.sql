@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.brand_assets (
 
 ALTER TABLE public.brand_assets ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "reviewer owns brand assets" ON public.brand_assets;
 CREATE POLICY "reviewer owns brand assets"
   ON public.brand_assets FOR ALL
   USING (reviewer_id = auth.uid())
@@ -28,6 +29,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('brand-assets', 'brand-assets', false)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "reviewer can upload brand assets" ON storage.objects;
 CREATE POLICY "reviewer can upload brand assets"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (
@@ -35,15 +37,17 @@ CREATE POLICY "reviewer can upload brand assets"
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "reviewer can read own brand assets" ON storage.objects;
 CREATE POLICY "reviewer can read own brand assets"
-  ON storage.objects FOR SELECT
+  ON storage.objects FOR SELECT TO authenticated
   USING (
     bucket_id = 'brand-assets'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "reviewer can delete own brand assets" ON storage.objects;
 CREATE POLICY "reviewer can delete own brand assets"
-  ON storage.objects FOR DELETE
+  ON storage.objects FOR DELETE TO authenticated
   USING (
     bucket_id = 'brand-assets'
     AND (storage.foldername(name))[1] = auth.uid()::text
