@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import ReviewerBottomNav from './BottomNav'
 
 export default async function ReviewerLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createServerSupabaseClient()
@@ -17,13 +18,13 @@ export default async function ReviewerLayout({ children }: { children: React.Rea
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <header style={{
-        padding: '16px 20px',
+        padding: '18px 20px 14px',
         borderBottom: '1px solid var(--line-soft)',
         background: 'var(--bg)',
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
         <span style={{
-          fontFamily: 'var(--display)', fontSize: 18, fontWeight: 400,
+          fontFamily: 'var(--display)', fontSize: 17, fontWeight: 400,
           letterSpacing: '-0.01em', color: 'var(--ink)',
         }}>
           Curato Studio
@@ -31,17 +32,18 @@ export default async function ReviewerLayout({ children }: { children: React.Rea
         {count > 0 && (
           <span style={{
             background: 'var(--violet)', color: '#fff',
-            borderRadius: '50%', width: 20, height: 20,
+            borderRadius: 100, padding: '1px 7px',
             fontSize: 11, fontFamily: 'var(--mono)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            letterSpacing: '0.02em',
           }}>
             {count}
           </span>
         )}
       </header>
-      <main style={{ flex: 1, padding: '0 20px' }}>
+      <main style={{ flex: 1, padding: '0 20px', paddingBottom: 96 }}>
         {children}
       </main>
+      <ReviewerBottomNav />
     </div>
   )
 }

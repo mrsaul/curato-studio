@@ -7,32 +7,81 @@ export default function SubmitPage() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      minHeight: 'calc(100dvh - 57px)', padding: '32px 0',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      minHeight: 'calc(100dvh - 57px - 96px)',
+      padding: '40px 0 20px',
     }}>
-      <p style={{
-        fontSize: 22, fontFamily: 'var(--display)', fontWeight: 400,
-        color: 'var(--ink)', letterSpacing: '-0.01em',
-        textAlign: 'center', lineHeight: 1.3, marginBottom: 8,
+      {/* Eyebrow */}
+      <p className="fade-up" style={{
+        fontFamily: 'var(--mono)',
+        fontSize: 10,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color: 'var(--ink-faint)',
+        marginBottom: 20,
       }}>
-        What would you like to share?
+        New brief
       </p>
-      <p style={{ fontSize: 14, color: 'var(--ink-faint)', marginBottom: 48, textAlign: 'center' }}>
-        Tell us in your own words — voice, text, or photo.
+
+      {/* Editorial headline */}
+      <h1 className="fade-up fade-up-1" style={{
+        fontFamily: 'var(--display)',
+        fontSize: 34,
+        fontWeight: 400,
+        letterSpacing: '-0.025em',
+        lineHeight: 1.15,
+        color: 'var(--ink)',
+        marginBottom: 16,
+      }}>
+        What&apos;s the<br />
+        story today?
+      </h1>
+
+      {/* Divider */}
+      <div className="fade-up fade-up-1" style={{
+        width: 32,
+        height: 1,
+        background: 'var(--line)',
+        marginBottom: 20,
+      }} />
+
+      <p className="fade-up fade-up-2" style={{
+        fontSize: 14,
+        color: 'var(--ink-soft)',
+        lineHeight: 1.6,
+        marginBottom: 48,
+        maxWidth: 260,
+      }}>
+        Voice, text, or photo — share it in your own words. Your art director does the rest.
       </p>
+
       <button
+        className="fade-up fade-up-3"
         onClick={() => router.push('/submit/input')}
         style={{
-          background: 'var(--violet)', color: '#fff',
-          border: 'none', borderRadius: 14,
-          padding: '0 32px', minHeight: 'var(--touch)',
-          fontSize: 15, letterSpacing: '0.01em',
-          width: '100%', maxWidth: 280,
+          background: 'var(--ink)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 100,
+          padding: '0 28px',
+          height: 52,
+          fontSize: 13,
+          fontFamily: 'var(--mono)',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          width: 'fit-content',
           cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
         }}
       >
-        Create a post
+        Start a brief
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
       </button>
     </div>
   )

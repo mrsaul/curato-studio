@@ -1,21 +1,18 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { getContributorRequests } from '@/lib/requests'
+import { getReviewerHistory } from '@/lib/requests'
 import { CreativeRequest, RequestStatus } from '@/types/request'
-import RequestReplyForm from './RequestReplyForm'
-import DraftRetryButton from './DraftRetryButton'
-import CaptionShare from './CaptionShare'
 
 const STATUS_META: Record<RequestStatus, { label: string; color: string }> = {
-  new:               { label: 'Received',        color: 'var(--ink-faint)' },
-  interpreting:      { label: 'Processing',       color: 'var(--amber)' },
-  needs_info:        { label: 'Needs your answer',color: 'var(--amber)' },
-  draft_ready:       { label: 'Creating draft',   color: 'var(--amber)' },
-  awaiting_review:   { label: 'In review',        color: 'var(--violet)' },
-  approved:          { label: 'Approved',          color: 'var(--green)' },
-  changes_requested: { label: 'Changes needed',   color: 'var(--amber)' },
-  declined:          { label: 'Declined',          color: 'var(--red)' },
-  delivered:         { label: 'Delivered',         color: 'var(--green)' },
+  new:               { label: 'Received',       color: 'var(--ink-faint)' },
+  interpreting:      { label: 'Processing',      color: 'var(--amber)' },
+  needs_info:        { label: 'Awaiting reply',  color: 'var(--amber)' },
+  draft_ready:       { label: 'Draft ready',     color: 'var(--amber)' },
+  awaiting_review:   { label: 'In queue',        color: 'var(--violet)' },
+  approved:          { label: 'Approved',         color: 'var(--green)' },
+  changes_requested: { label: 'Changes sent',    color: 'var(--amber)' },
+  declined:          { label: 'Declined',         color: 'var(--red)' },
+  delivered:         { label: 'Delivered',        color: 'var(--green)' },
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -34,11 +31,10 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function RequestCard({ request }: { request: CreativeRequest }) {
+function HistoryCard({ request }: { request: CreativeRequest }) {
   const meta = STATUS_META[request.status]
   const input = request.transcript ?? request.raw_text ?? ''
-  const preview = input ? (input.length > 120 ? input.slice(0, 120) + '…' : input) : null
-  const isApproved = request.status === 'approved' || request.status === 'delivered'
+  const preview = input ? (input.length > 100 ? input.slice(0, 100) + '…' : input) : null
 
   return (
     <article style={{
@@ -48,11 +44,8 @@ function RequestCard({ request }: { request: CreativeRequest }) {
       border: '1px solid var(--line-soft)',
       overflow: 'hidden',
     }}>
-      {/* Status rail */}
-      <div style={{ height: 3, background: meta.color, opacity: 0.7 }} />
-
+      <div style={{ height: 3, background: meta.color, opacity: 0.5 }} />
       <div style={{ padding: '14px 16px' }}>
-        {/* Header row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <span style={{
             fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.1em',
@@ -66,7 +59,6 @@ function RequestCard({ request }: { request: CreativeRequest }) {
           </span>
         </div>
 
-        {/* Preview */}
         {preview ? (
           <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.55, marginBottom: 10 }}>
             {preview}
@@ -77,17 +69,15 @@ function RequestCard({ request }: { request: CreativeRequest }) {
           </p>
         )}
 
-        {/* Intent summary */}
         {request.intent_summary && (
           <p style={{
-            fontSize: 12, color: 'var(--violet)', lineHeight: 1.45, marginBottom: 10,
-            fontStyle: 'italic',
+            fontSize: 12, color: 'var(--violet)', lineHeight: 1.45,
+            fontStyle: 'italic', marginBottom: 10,
           }}>
             {request.intent_summary}
           </p>
         )}
 
-        {/* Status badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{
             width: 6, height: 6, borderRadius: '50%',
@@ -97,78 +87,64 @@ function RequestCard({ request }: { request: CreativeRequest }) {
             {meta.label}
           </span>
         </div>
-
-        {/* Clarification question */}
-        {request.status === 'needs_info' && request.clarification_question && (
-          <RequestReplyForm requestId={request.id} question={request.clarification_question} />
-        )}
-
-        {/* Draft retry */}
-        {request.status === 'draft_ready' && (
-          <DraftRetryButton requestId={request.id} />
-        )}
-
-        {/* Share/copy for approved posts */}
-        {isApproved && <CaptionShare requestId={request.id} />}
       </div>
     </article>
   )
 }
 
-export default async function RequestsPage() {
+export default async function HistoryPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const requests = await getContributorRequests(supabase, user.id)
+  const history = await getReviewerHistory(supabase, user.id)
 
-  const active = requests.filter(r => !['approved', 'delivered', 'declined'].includes(r.status))
-  const done = requests.filter(r => ['approved', 'delivered', 'declined'].includes(r.status))
+  const approved = history.filter(r => r.status === 'approved' || r.status === 'delivered')
+  const other = history.filter(r => r.status !== 'approved' && r.status !== 'delivered')
 
   return (
     <div style={{ paddingTop: 28, paddingBottom: 32 }}>
-      {/* Header */}
       <p style={{
         fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.12em',
         textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6,
       }}>
-        Your work
+        Art Director
       </p>
       <h1 style={{
         fontFamily: 'var(--display)', fontSize: 26, fontWeight: 400,
-        letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: 24,
+        letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: 28,
       }}>
-        Briefs
+        Reviewed
       </h1>
 
-      {requests.length === 0 ? (
-        <div style={{ paddingTop: 40, textAlign: 'center' }}>
+      {history.length === 0 ? (
+        <div style={{ textAlign: 'center', paddingTop: 48 }}>
           <p style={{ fontSize: 14, color: 'var(--ink-faint)', lineHeight: 1.6 }}>
-            No briefs yet.<br/>Head to Create to start your first post.
+            Reviewed briefs will appear here after you approve or decline them.
           </p>
         </div>
       ) : (
         <>
-          {active.length > 0 && (
+          {approved.length > 0 && (
             <section style={{ marginBottom: 32 }}>
               <p style={{
                 fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.1em',
-                textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 12,
+                textTransform: 'uppercase', color: 'var(--green)', marginBottom: 12,
               }}>
-                In progress · {active.length}
+                Approved · {approved.length}
               </p>
-              {active.map(r => <RequestCard key={r.id} request={r} />)}
+              {approved.map(r => <HistoryCard key={r.id} request={r} />)}
             </section>
           )}
-          {done.length > 0 && (
+          {other.length > 0 && (
             <section>
               <p style={{
                 fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 12,
               }}>
-                Done · {done.length}
+                Other · {other.length}
               </p>
-              {done.map(r => <RequestCard key={r.id} request={r} />)}
+              {other.map(r => <HistoryCard key={r.id} request={r} />)}
             </section>
           )}
         </>
