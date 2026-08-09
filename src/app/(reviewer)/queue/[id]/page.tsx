@@ -86,7 +86,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
               textTransform: 'uppercase', marginBottom: 8,
             }}>
-              Caption options — pick one
+              Caption — edit &amp; approve
             </p>
             {request.status === 'awaiting_review' ? (
               <CaptionPicker
