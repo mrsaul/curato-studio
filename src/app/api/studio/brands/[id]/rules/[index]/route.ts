@@ -11,9 +11,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { data: ctx } = await supabase.from('contexts').select('reviewer_id').eq('id', id).single()
   if (!ctx || ctx.reviewer_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const { data: capsule } = await supabase
+  const { data: capsule, error: capsuleError } = await supabase
     .from('capsules').select('id, rules').eq('context_id', id)
     .order('created_at', { ascending: false }).limit(1).maybeSingle()
+  if (capsuleError) return NextResponse.json({ error: 'Internal error' }, { status: 500 })
 
   const rules = ((capsule?.rules ?? []) as Rule[])
   const idx = parseInt(index, 10)
