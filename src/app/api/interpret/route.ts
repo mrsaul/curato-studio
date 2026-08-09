@@ -136,12 +136,10 @@ Analyze the photo carefully. Return a JSON object with these exact fields (no ma
     return NextResponse.json({ error: 'Failed to parse interpret response' }, { status: 500 })
   }
 
-  // Photo requests always proceed to draft — the image provides sufficient context
-  if (request.photo_url) {
-    parsed.clarification_question = null
-  }
+  // Always proceed to draft — every Creator submission is an IG caption brief
+  parsed.clarification_question = null
 
-  const newStatus = parsed.clarification_question ? 'needs_info' : 'draft_ready'
+  const newStatus = 'draft_ready'
   await updateRequest(supabase, request.id, {
     status: newStatus,
     intent_summary: parsed.confirmation_sentence,
