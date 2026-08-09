@@ -4,13 +4,29 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
+type Phase = 'idle' | 'generating' | 'choosing' | 'sending'
+
+interface CaptionOption {
+  style: string
+  text: string
+}
+
+interface Draft {
+  id: string
+  caption_options: CaptionOption[]
+  recommended_caption: string
+  cta: string
+  hashtags: string[]
+}
+
 function ConfirmContent() {
   const router = useRouter()
   const params = useSearchParams()
   const mode = params.get('mode') as 'text' | 'voice' | 'photo' | null
   const text = params.get('text') ?? ''
   const transcript = params.get('transcript') ?? ''
-  const [loading, setLoading] = useState(false)
+
+  const [phase, setPhase] = useState<Phase>('idle')
   const [error, setError] = useState<string | null>(null)
   const [reviewerId, setReviewerId] = useState<string | null>(null)
   const [contextId, setContextId] = useState<string | null>(null)
@@ -18,6 +34,10 @@ function ConfirmContent() {
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
   const [photoMissing, setPhotoMissing] = useState(false)
   const [photoMimeType, setPhotoMimeType] = useState<string>('image/jpeg')
+  const [requestId, setRequestId] = useState<string | null>(null)
+  const [draftId, setDraftId] = useState<string | null>(null)
+  const [captionOptions, setCaptionOptions] = useState<CaptionOption[]>([])
+  const [selectedCaption, setSelectedCaption] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -74,9 +94,9 @@ function ConfirmContent() {
     return () => { if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl) }
   }, [photoPreviewUrl])
 
-  async function handleSubmit() {
+  async function handleGenerateOptions() {
     if (!reviewerId) { setError('No reviewer found'); return }
-    setLoading(true)
+    setPhase('generating')
     setError(null)
     try {
       let photoUrl: string | null = null
@@ -112,31 +132,55 @@ function ConfirmContent() {
       const json = await res.json() as { request?: { id: string }; error?: string }
       if (!json.request) throw new Error(json.error ?? 'Failed to create request')
 
-      const requestId = json.request.id
+      const reqId = json.request.id
+      setRequestId(reqId)
 
       const interpretRes = await fetch('/api/interpret', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_id: requestId }),
+        body: JSON.stringify({ request_id: reqId }),
       })
       if (!interpretRes.ok) throw new Error('Interpret failed')
       const interpretJson = await interpretRes.json() as { status?: string }
 
-      if (interpretJson.status === 'draft_ready') {
-        const draftRes = await fetch('/api/draft', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ request_id: requestId }),
-        })
-        if (!draftRes.ok) throw new Error('Draft generation failed')
+      if (interpretJson.status !== 'draft_ready') {
+        throw new Error('Could not interpret your input — please try again')
       }
 
+      const draftRes = await fetch('/api/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request_id: reqId }),
+      })
+      if (!draftRes.ok) throw new Error('Caption generation failed')
+      const draftJson = await draftRes.json() as { draft?: Draft; error?: string }
+      if (!draftJson.draft) throw new Error(draftJson.error ?? 'Draft generation failed')
+
       sessionStorage.removeItem('photo_blob_b64')
-      setLoading(false)
+      setDraftId(draftJson.draft.id)
+      setCaptionOptions(draftJson.draft.caption_options ?? [])
+      setPhase('choosing')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
+      setPhase('idle')
+    }
+  }
+
+  async function handleSendToDirector() {
+    if (!selectedCaption || !draftId || !requestId) return
+    setPhase('sending')
+    setError(null)
+    try {
+      const res = await fetch('/api/draft', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId, request_id: requestId, chosen_caption: selectedCaption }),
+      })
+      if (!res.ok) throw new Error('Failed to send to Director')
       router.push(`/submit/sent?id=${requestId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
-      setLoading(false)
+      setPhase('choosing')
     }
   }
 
@@ -153,6 +197,73 @@ function ConfirmContent() {
           style={{ background: 'none', border: 'none', color: 'var(--violet)', cursor: 'pointer', fontSize: 14 }}
         >
           ← Go back
+        </button>
+      </div>
+    )
+  }
+
+  if (phase === 'choosing' || phase === 'sending') {
+    return (
+      <div style={{ paddingTop: 24, paddingBottom: 48 }}>
+        {photoPreviewUrl && (
+          <img
+            src={photoPreviewUrl}
+            alt="Photo preview"
+            style={{ width: '100%', borderRadius: 10, maxHeight: 180, objectFit: 'cover', marginBottom: 24 }}
+          />
+        )}
+        <p style={{ fontSize: 16, fontFamily: 'var(--display)', marginBottom: 4, lineHeight: 1.3 }}>
+          Pick your caption
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 20, lineHeight: 1.5 }}>
+          Choose the version that sounds most like you.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+          {captionOptions.map((option) => {
+            const isSelected = selectedCaption === option.text
+            return (
+              <button
+                key={option.style}
+                onClick={() => setSelectedCaption(option.text)}
+                style={{
+                  textAlign: 'left', cursor: 'pointer',
+                  border: isSelected ? '2px solid var(--violet)' : '1.5px solid var(--line-soft)',
+                  borderRadius: 12, padding: '14px 16px',
+                  background: isSelected ? 'rgba(74,61,176,0.06)' : 'var(--surface)',
+                  transition: 'border-color 0.15s, background 0.15s',
+                }}
+              >
+                <p style={{
+                  fontSize: 10, fontFamily: 'var(--mono)', textTransform: 'uppercase',
+                  color: isSelected ? 'var(--violet)' : 'var(--ink-faint)',
+                  marginBottom: 8, letterSpacing: '0.06em',
+                }}>
+                  {option.style}
+                </p>
+                <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>
+                  {option.text}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+
+        {error && (
+          <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>{error}</p>
+        )}
+
+        <button
+          onClick={handleSendToDirector}
+          disabled={!selectedCaption || phase === 'sending'}
+          style={{
+            width: '100%', minHeight: 'var(--touch)', borderRadius: 14,
+            background: 'var(--violet)', color: '#fff', border: 'none', fontSize: 15,
+            opacity: (!selectedCaption || phase === 'sending') ? 0.5 : 1,
+            cursor: (!selectedCaption || phase === 'sending') ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {phase === 'sending' ? 'Sending…' : 'Send to Director'}
         </button>
       </div>
     )
@@ -183,24 +294,35 @@ function ConfirmContent() {
           </div>
         </>
       ) : null}
-      <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 28, lineHeight: 1.5 }}>
-        We&apos;ll turn this into an on-brand post and send it to your reviewer.
-      </p>
-      {error && (
-        <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>{error}</p>
+
+      {phase === 'generating' ? (
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+          <p style={{ fontSize: 14, color: 'var(--ink-faint)', lineHeight: 1.5 }}>
+            Crafting 3 caption ideas…
+          </p>
+        </div>
+      ) : (
+        <>
+          <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 28, lineHeight: 1.5 }}>
+            AI will generate 3 caption options for you to choose from before sending to your Director.
+          </p>
+          {error && (
+            <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>{error}</p>
+          )}
+          <button
+            onClick={handleGenerateOptions}
+            disabled={!reviewerId || (mode === 'photo' && !photoBlob)}
+            style={{
+              width: '100%', minHeight: 'var(--touch)', borderRadius: 14,
+              background: 'var(--violet)', color: '#fff', border: 'none', fontSize: 15,
+              opacity: (!reviewerId || (mode === 'photo' && !photoBlob)) ? 0.6 : 1,
+              cursor: (!reviewerId || (mode === 'photo' && !photoBlob)) ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Generate caption options
+          </button>
+        </>
       )}
-      <button
-        onClick={handleSubmit}
-        disabled={loading || !reviewerId || (mode === 'photo' && !photoBlob)}
-        style={{
-          width: '100%', minHeight: 'var(--touch)', borderRadius: 14,
-          background: 'var(--violet)', color: '#fff', border: 'none', fontSize: 15,
-          opacity: (loading || !reviewerId || (mode === 'photo' && !photoBlob)) ? 0.6 : 1,
-          cursor: (loading || !reviewerId || (mode === 'photo' && !photoBlob)) ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {loading ? 'Sending…' : 'Send to reviewer'}
-      </button>
     </div>
   )
 }

@@ -169,7 +169,37 @@ Return JSON only:
     return NextResponse.json({ error: 'Failed to save draft' }, { status: 500 })
   }
 
-  await updateRequest(supabase, request.id, { status: 'awaiting_review' })
-
+  // Status stays at draft_ready — awaiting_review is set after the Creator picks a caption
   return NextResponse.json({ draft })
+}
+
+export async function PATCH(req: NextRequest) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await req.json() as { draft_id?: string; request_id?: string; chosen_caption?: string }
+  if (!body.draft_id || !body.request_id || !body.chosen_caption) {
+    return NextResponse.json({ error: 'draft_id, request_id and chosen_caption required' }, { status: 400 })
+  }
+
+  const request = await getRequest(supabase, body.request_id)
+  if (!request || request.contributor_id !== user.id) {
+    return NextResponse.json({ error: 'Request not found' }, { status: 404 })
+  }
+
+  const service = createServiceSupabaseClient()
+  const { error: draftError } = await service
+    .from('request_drafts')
+    .update({ recommended_caption: body.chosen_caption })
+    .eq('id', body.draft_id)
+    .eq('request_id', body.request_id)
+
+  if (draftError) {
+    return NextResponse.json({ error: 'Failed to update draft' }, { status: 500 })
+  }
+
+  await updateRequest(supabase, body.request_id, { status: 'awaiting_review' })
+
+  return NextResponse.json({ ok: true })
 }
