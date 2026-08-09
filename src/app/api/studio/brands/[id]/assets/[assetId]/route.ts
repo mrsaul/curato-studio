@@ -18,7 +18,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!asset || asset.reviewer_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const service = createServiceSupabaseClient()
-  await service.storage.from('brand-assets').remove([asset.storage_path])
+  const { error: storageError } = await service.storage.from('brand-assets').remove([asset.storage_path])
+  if (storageError) {
+    console.error('Storage remove failed for', asset.storage_path, storageError.message)
+  }
 
   const { error } = await supabase.from('brand_assets').delete().eq('id', assetId)
   if (error) return NextResponse.json({ error: 'Failed to delete asset record' }, { status: 500 })

@@ -64,11 +64,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (uploadError) return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
 
-  const { data: signedData } = await service.storage
+  const { data: signedData, error: signError } = await service.storage
     .from('brand-assets')
     .createSignedUrl(storagePath, 60 * 60 * 24 * 365)
 
-  const url = signedData?.signedUrl ?? ''
+  if (signError || !signedData?.signedUrl) {
+    await service.storage.from('brand-assets').remove([storagePath])
+    return NextResponse.json({ error: 'Failed to generate asset URL' }, { status: 500 })
+  }
+
+  const url = signedData.signedUrl
 
   const { data: asset, error: dbError } = await supabase
     .from('brand_assets')
