@@ -30,7 +30,7 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
 
   const tiles = [
     { label: 'Rules', sub: 'voice & style', count: ruleCount, href: `/studio/${brandId}/rules`, pending: false },
-    { label: 'Mind', sub: pendingMindCount > 0 ? 'need review' : 'up to date', count: pendingMindCount > 0 ? pendingMindCount : ruleCount, href: `/studio/${brandId}/mind`, pending: pendingMindCount > 0 },
+    { label: 'Mind', sub: pendingMindCount > 0 ? 'need review' : 'up to date', count: pendingMindCount, href: `/studio/${brandId}/mind`, pending: pendingMindCount > 0 },
     { label: 'Templates', sub: 'post formats', count: templateCount, href: `/studio/${brandId}/templates`, pending: false },
     { label: 'Assets', sub: 'images & files', count: assetCount, href: `/studio/${brandId}/assets`, pending: false },
   ]

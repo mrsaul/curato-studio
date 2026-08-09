@@ -35,6 +35,10 @@ export default function MindClient({ brandId, initialPending, initialConfirmed }
         <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>No judgments yet. They appear here after each approved review.</p>
       )}
 
+      {pending.length === 0 && confirmed.length > 0 && (
+        <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 16 }}>All caught up — no new learnings to review.</p>
+      )}
+
       {pending.length > 0 && (
         <>
           <p style={{ fontSize: 9, fontFamily: 'var(--mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c9960a', marginBottom: 10 }}>{pending.length} pending</p>
@@ -65,7 +69,7 @@ export default function MindClient({ brandId, initialPending, initialConfirmed }
         </>
       )}
 
-      {pending.length === 0 && confirmed.length === 0 ? null : confirmed.length > 0 && (
+      {confirmed.length > 0 && (
         <>
           <p style={{ fontSize: 9, fontFamily: 'var(--mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8, marginTop: pending.length > 0 ? 16 : 0 }}>{confirmed.length} confirmed</p>
           {confirmed.map(j => (
