@@ -35,7 +35,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     .select('id, context_id, name, type, description, active, created_at')
     .single()
 
-  if (error) return NextResponse.json({ error: 'Failed to update template' }, { status: 500 })
+  if (error) {
+    if (error.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Failed to update template' }, { status: 500 })
+  }
   return NextResponse.json({ template: data })
 }
 
