@@ -17,6 +17,12 @@ const ClockIcon = () => (
   </svg>
 )
 
+const StudioIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 2l1.5 3.5H13l-2.8 2 1.1 3.5L8 9 4.7 11 5.8 7.5 3 5.5h3.5L8 2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+  </svg>
+)
+
 export default function ReviewerBottomNav() {
   const pathname = usePathname()
 
@@ -32,6 +38,12 @@ export default function ReviewerBottomNav() {
       href: '/history',
       icon: <ClockIcon />,
       active: pathname === '/history',
+    },
+    {
+      label: 'STUDIO',
+      href: '/studio',
+      icon: <StudioIcon />,
+      active: pathname === '/studio' || pathname.startsWith('/studio/'),
     },
   ]
 
