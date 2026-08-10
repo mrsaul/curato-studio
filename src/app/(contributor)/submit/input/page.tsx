@@ -1,14 +1,17 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import PhotoEditor, { PhotoEditorHandle } from './PhotoEditor'
 
 type InputMode = 'text' | 'voice' | 'photo'
 type RecordingState = 'idle' | 'recording' | 'processing'
 
-export default function InputPage() {
+function InputPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const brandId = searchParams.get('brandId') ?? ''
+  const reviewerId = searchParams.get('reviewerId') ?? ''
   const [mode, setMode] = useState<InputMode>('text')
   const [text, setText] = useState('')
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
@@ -80,6 +83,10 @@ export default function InputPage() {
   }
 
   const handleContinue = useCallback(async () => {
+    const carry = new URLSearchParams()
+    if (brandId) carry.set('brandId', brandId)
+    if (reviewerId) carry.set('reviewerId', reviewerId)
+
     if (mode === 'photo' && photoEditorRef.current) {
       setExporting(true)
       setError(null)
@@ -93,19 +100,19 @@ export default function InputPage() {
         })
         sessionStorage.setItem('photo_blob_b64', b64)
         setExporting(false)
-        router.push('/submit/confirm?mode=photo')
+        carry.set('mode', 'photo')
+        router.push(`/submit/confirm?${carry.toString()}`)
       } catch {
         setError('Could not export photo. Please try again.')
         setExporting(false)
       }
       return
     }
-    const params = new URLSearchParams()
-    params.set('mode', mode)
-    if (mode === 'text') params.set('text', text)
-    if (mode === 'voice') params.set('transcript', transcript)
-    router.push(`/submit/confirm?${params.toString()}`)
-  }, [mode, text, transcript, router])
+    carry.set('mode', mode)
+    if (mode === 'text') carry.set('text', text)
+    if (mode === 'voice') carry.set('transcript', transcript)
+    router.push(`/submit/confirm?${carry.toString()}`)
+  }, [mode, text, transcript, router, brandId, reviewerId])
 
   const ok = canContinue()
 
@@ -221,4 +228,8 @@ export default function InputPage() {
       </button>
     </div>
   )
+}
+
+export default function InputPage() {
+  return <Suspense><InputPageInner /></Suspense>
 }

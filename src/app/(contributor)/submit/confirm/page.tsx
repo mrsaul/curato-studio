@@ -25,11 +25,13 @@ function ConfirmContent() {
   const mode = params.get('mode') as 'text' | 'voice' | 'photo' | null
   const text = params.get('text') ?? ''
   const transcript = params.get('transcript') ?? ''
+  const brandId = params.get('brandId') ?? ''
+  const reviewerIdParam = params.get('reviewerId') ?? ''
 
   const [phase, setPhase] = useState<Phase>('idle')
   const [error, setError] = useState<string | null>(null)
-  const [reviewerId, setReviewerId] = useState<string | null>(null)
-  const [contextId, setContextId] = useState<string | null>(null)
+  const [reviewerId, setReviewerId] = useState<string | null>(reviewerIdParam || null)
+  const [contextId, setContextId] = useState<string | null>(brandId || null)
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
   const [photoMissing, setPhotoMissing] = useState(false)
@@ -46,6 +48,8 @@ function ConfirmContent() {
       .then(({ data }) => {
         if (!mounted) return
         if (!data.user) { router.replace('/login'); return }
+        // If brandId + reviewerId came from URL, skip the API call
+        if (brandId && reviewerIdParam) return
         return fetch('/api/reviewer')
           .then(r => r.json())
           .then((json: { reviewer?: { id: string; context_id: string } }) => {
@@ -88,7 +92,7 @@ function ConfirmContent() {
     }
 
     return () => { mounted = false }
-  }, [mode, router])
+  }, [mode, router, brandId, reviewerIdParam])
 
   useEffect(() => {
     return () => { if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl) }
