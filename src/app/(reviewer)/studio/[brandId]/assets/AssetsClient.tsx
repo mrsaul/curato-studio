@@ -7,7 +7,7 @@ export default function AssetsClient({ brandId, initialAssets }: { brandId: stri
   const [assets, setAssets] = useState<BrandAsset[]>(initialAssets)
   const [uploading, setUploading] = useState(false)
   const [selected, setSelected] = useState<BrandAsset | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -18,8 +18,10 @@ export default function AssetsClient({ brandId, initialAssets }: { brandId: stri
       const form = new FormData()
       form.append('file', file)
       const res = await fetch(`/api/studio/brands/${brandId}/assets`, { method: 'POST', body: form })
-      const data = await res.json()
-      if (res.ok) setAssets(prev => [...prev, data.asset])
+      if (res.ok) {
+        const data = await res.json() as { asset: BrandAsset }
+        setAssets(prev => [...prev, data.asset])
+      }
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -27,7 +29,7 @@ export default function AssetsClient({ brandId, initialAssets }: { brandId: stri
   }
 
   async function deleteAsset(asset: BrandAsset) {
-    setDeleting(asset.id)
+    setDeleting(prev => new Set(prev).add(asset.id))
     try {
       const res = await fetch(`/api/studio/brands/${brandId}/assets/${asset.id}`, { method: 'DELETE' })
       if (res.ok) {
@@ -35,7 +37,7 @@ export default function AssetsClient({ brandId, initialAssets }: { brandId: stri
         setSelected(null)
       }
     } finally {
-      setDeleting(null)
+      setDeleting(prev => { const s = new Set(prev); s.delete(asset.id); return s })
     }
   }
 
@@ -76,10 +78,10 @@ export default function AssetsClient({ brandId, initialAssets }: { brandId: stri
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button
                 onClick={() => deleteAsset(selected)}
-                disabled={deleting === selected.id}
+                disabled={deleting.has(selected.id)}
                 style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: 100, padding: '8px 20px', fontSize: 11, fontFamily: 'var(--mono)', cursor: 'pointer' }}
               >
-                {deleting === selected.id ? 'Deleting…' : 'Delete'}
+                {deleting.has(selected.id) ? 'Deleting…' : 'Delete'}
               </button>
               <button
                 onClick={() => setSelected(null)}

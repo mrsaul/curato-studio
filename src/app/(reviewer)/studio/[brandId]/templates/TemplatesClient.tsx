@@ -13,8 +13,8 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function TemplatesClient({ brandId, initialTemplates }: { brandId: string; initialTemplates: AtelierTemplate[] }) {
   const [templates, setTemplates] = useState<AtelierTemplate[]>(initialTemplates)
-  const [toggling, setToggling] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [toggling, setToggling] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [type, setType] = useState<AtelierTemplate['type']>('photo_post')
@@ -22,27 +22,29 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
   const [saving, setSaving] = useState(false)
 
   async function toggleActive(t: AtelierTemplate) {
-    setToggling(t.id)
+    setToggling(prev => new Set(prev).add(t.id))
     try {
       const res = await fetch(`/api/studio/brands/${brandId}/templates/${t.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ active: !t.active }),
       })
-      const data = await res.json()
-      if (res.ok) setTemplates(prev => prev.map(x => x.id === t.id ? data.template : x))
+      if (res.ok) {
+        const data = await res.json() as { template: AtelierTemplate }
+        setTemplates(prev => prev.map(x => x.id === t.id ? data.template : x))
+      }
     } finally {
-      setToggling(null)
+      setToggling(prev => { const s = new Set(prev); s.delete(t.id); return s })
     }
   }
 
   async function deleteTemplate(id: string) {
-    setDeleting(id)
+    setDeleting(prev => new Set(prev).add(id))
     try {
       const res = await fetch(`/api/studio/brands/${brandId}/templates/${id}`, { method: 'DELETE' })
       if (res.ok) setTemplates(prev => prev.filter(x => x.id !== id))
     } finally {
-      setDeleting(null)
+      setDeleting(prev => { const s = new Set(prev); s.delete(id); return s })
     }
   }
 
@@ -55,8 +57,8 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), type, description: description.trim() }),
       })
-      const data = await res.json()
       if (res.ok) {
+        const data = await res.json() as { template: AtelierTemplate }
         setTemplates(prev => [...prev, data.template])
         setName(''); setDescription(''); setShowForm(false)
       }
@@ -87,7 +89,7 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               onClick={() => toggleActive(t)}
-              disabled={toggling === t.id}
+              disabled={toggling.has(t.id)}
               style={{
                 fontSize: 10, fontFamily: 'var(--mono)', borderRadius: 4, padding: '2px 8px', border: 'none', cursor: 'pointer',
                 background: t.active ? '#e8e4ff' : '#f0f0f0', color: t.active ? '#4A3DB0' : 'var(--ink-faint)',
@@ -97,10 +99,10 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
             </button>
             <button
               onClick={() => deleteTemplate(t.id)}
-              disabled={deleting === t.id}
+              disabled={deleting.has(t.id)}
               style={{ background: 'none', border: 'none', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 0 0 4px' }}
             >
-              {deleting === t.id ? '…' : '×'}
+              {deleting.has(t.id) ? '…' : '×'}
             </button>
           </div>
         </div>
