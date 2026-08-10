@@ -22,8 +22,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const service = createServiceSupabaseClient()
-  let { data: invite } = await service
+  const { data: invite, error: readError } = await service
     .from('brand_invites').select('token').eq('context_id', id).single()
+  if (readError && readError.code !== 'PGRST116') {
+    return NextResponse.json({ error: 'Failed to read invite' }, { status: 500 })
+  }
 
   if (!invite) {
     const { data: newInvite, error } = await service
@@ -55,7 +58,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const service = createServiceSupabaseClient()
-  await service.from('brand_invites').delete().eq('context_id', id)
+  const { error: deleteError } = await service.from('brand_invites').delete().eq('context_id', id)
+  if (deleteError) return NextResponse.json({ error: 'Failed to delete invite' }, { status: 500 })
 
   const { data: invite, error } = await service
     .from('brand_invites').insert({ context_id: id }).select('token').single()
