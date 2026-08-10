@@ -19,6 +19,7 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
   const [domain, setDomain] = useState<Rule['domain']>('voice')
   const [text, setText] = useState('')
   const [adding, setAdding] = useState(false)
+  const [deleting, setDeleting] = useState<number | null>(null)
 
   async function addRule() {
     if (!text.trim()) return
@@ -37,9 +38,14 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
   }
 
   async function deleteRule(index: number) {
-    const res = await fetch(`/api/studio/brands/${brandId}/rules/${index}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (res.ok) setRules(data.rules)
+    setDeleting(index)
+    try {
+      const res = await fetch(`/api/studio/brands/${brandId}/rules/${index}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok) setRules(data.rules)
+    } finally {
+      setDeleting(null)
+    }
   }
 
   const selectStyle: React.CSSProperties = { padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: '#f5f4ff', color: 'var(--violet)', fontSize: 12, fontFamily: 'var(--mono)', cursor: 'pointer' }
@@ -61,7 +67,9 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
               <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginRight: 6 }}>{rule.domain}:</span>
               <span style={{ fontSize: 11, color: 'var(--ink)' }}>{rule.text}</span>
             </div>
-            <button onClick={() => deleteRule(i)} style={{ background: 'none', border: 'none', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 16, padding: '0 0 0 8px', lineHeight: 1 }}>×</button>
+            <button onClick={() => deleteRule(i)} disabled={deleting === i} style={{ background: 'none', border: 'none', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 16, padding: '0 0 0 8px', lineHeight: 1 }}>
+              {deleting === i ? '…' : '×'}
+            </button>
           </div>
         )
       })}
