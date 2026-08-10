@@ -61,6 +61,9 @@ export async function POST(req: NextRequest) {
     .select('id, name, description')
     .single()
 
-  if (error) return NextResponse.json({ error: 'Failed to create brand' }, { status: 500 })
+  if (error) {
+    console.error('[POST /api/studio/brands] Supabase error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json({ brand: data })
 }
