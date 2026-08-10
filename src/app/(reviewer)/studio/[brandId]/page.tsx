@@ -12,7 +12,7 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
     .from('contexts').select('id, name, description, user_id').eq('id', brandId).single()
   if (!ctx || ctx.user_id !== user.id) redirect('/studio')
 
-  const [capsule, pending, templates, assets] = await Promise.all([
+  const [capsule, pending, templates, assets, members] = await Promise.all([
     supabase.from('capsules').select('rules').eq('context_id', brandId)
       .order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('judgments').select('id', { count: 'exact', head: true })
@@ -21,18 +21,22 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
       .eq('context_id', brandId).eq('active', true),
     supabase.from('brand_assets').select('id', { count: 'exact', head: true })
       .eq('context_id', brandId),
+    supabase.from('brand_members').select('id', { count: 'exact', head: true })
+      .eq('context_id', brandId),
   ])
 
   const ruleCount = ((capsule.data?.rules ?? []) as unknown[]).length
   const pendingMindCount = pending.count ?? 0
   const templateCount = templates.count ?? 0
   const assetCount = assets.count ?? 0
+  const memberCount = members.count ?? 0
 
   const tiles = [
-    { label: 'Rules', sub: 'voice & style', count: ruleCount, href: `/studio/${brandId}/rules`, pending: false },
-    { label: 'Mind', sub: pendingMindCount > 0 ? 'need review' : 'up to date', count: pendingMindCount, href: `/studio/${brandId}/mind`, pending: pendingMindCount > 0 },
-    { label: 'Templates', sub: 'post formats', count: templateCount, href: `/studio/${brandId}/templates`, pending: false },
-    { label: 'Assets', sub: 'images & files', count: assetCount, href: `/studio/${brandId}/assets`, pending: false },
+    { label: 'Rules', sub: 'voice & style', count: ruleCount, href: `/studio/${brandId}/rules`, pending: false, wide: false },
+    { label: 'Mind', sub: pendingMindCount > 0 ? 'need review' : 'up to date', count: pendingMindCount, href: `/studio/${brandId}/mind`, pending: pendingMindCount > 0, wide: false },
+    { label: 'Templates', sub: 'post formats', count: templateCount, href: `/studio/${brandId}/templates`, pending: false, wide: false },
+    { label: 'Assets', sub: 'images & files', count: assetCount, href: `/studio/${brandId}/assets`, pending: false, wide: false },
+    { label: 'Creators', sub: memberCount === 0 ? 'none yet' : 'active', count: memberCount, href: `/studio/${brandId}/creators`, pending: false, wide: true },
   ]
 
   return (
@@ -43,18 +47,30 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
         {tiles.map(tile => (
-          <Link key={tile.href} href={tile.href} style={{ textDecoration: 'none' }}>
-            <div style={{
-              background: tile.pending ? '#fffbe8' : 'var(--surface)',
-              border: `1px solid ${tile.pending ? '#f0d060' : 'var(--line-soft)'}`,
-              borderRadius: 14, padding: 14,
-            }}>
-              <p style={{ fontSize: 9, fontFamily: 'var(--mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: tile.pending ? '#c9960a' : 'var(--ink-faint)', marginBottom: 6 }}>
-                {tile.label}{tile.pending ? ' ●' : ''}
-              </p>
-              <p style={{ fontSize: 28, fontWeight: 300, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>{tile.count}</p>
-              <p style={{ fontSize: 10, color: tile.pending ? '#c9960a' : 'var(--ink-faint)' }}>{tile.sub}</p>
-            </div>
+          <Link key={tile.href} href={tile.href} style={{ textDecoration: 'none', ...(tile.wide ? { gridColumn: '1 / -1' } : {}) }}>
+            {tile.wide ? (
+              <div style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--line-soft)',
+                borderRadius: 14,
+                display: 'flex', alignItems: 'center', gap: 16, padding: '12px 14px',
+              }}>
+                <p style={{ fontSize: 22, fontWeight: 300, color: 'var(--ink)', lineHeight: 1 }}>{tile.count}</p>
+                <p style={{ fontSize: 9, fontFamily: 'var(--mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{tile.label}</p>
+              </div>
+            ) : (
+              <div style={{
+                background: tile.pending ? '#fffbe8' : 'var(--surface)',
+                border: `1px solid ${tile.pending ? '#f0d060' : 'var(--line-soft)'}`,
+                borderRadius: 14, padding: 14,
+              }}>
+                <p style={{ fontSize: 9, fontFamily: 'var(--mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: tile.pending ? '#c9960a' : 'var(--ink-faint)', marginBottom: 6 }}>
+                  {tile.label}{tile.pending ? ' ●' : ''}
+                </p>
+                <p style={{ fontSize: 28, fontWeight: 300, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>{tile.count}</p>
+                <p style={{ fontSize: 10, color: tile.pending ? '#c9960a' : 'var(--ink-faint)' }}>{tile.sub}</p>
+              </div>
+            )}
           </Link>
         ))}
       </div>
