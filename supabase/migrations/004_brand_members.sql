@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS public.brand_invites (
   id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   context_id uuid NOT NULL REFERENCES public.contexts(id) ON DELETE CASCADE,
-  token      text NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(6), 'hex'),
+  token      text NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (context_id)
 );
