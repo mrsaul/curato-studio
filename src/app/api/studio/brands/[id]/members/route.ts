@@ -6,8 +6,9 @@ async function getOwnedContext(
   id: string,
   userId: string,
 ) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('contexts').select('id').eq('id', id).eq('user_id', userId).single()
+  if (error && error.code !== 'PGRST116') throw error
   return data
 }
 
@@ -17,8 +18,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  if (!await getOwnedContext(supabase, id, user.id)) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  try {
+    if (!await getOwnedContext(supabase, id, user.id)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+  } catch {
+    return NextResponse.json({ error: 'Database error' }, { status: 500 })
   }
 
   const service = createServiceSupabaseClient()
@@ -34,11 +39,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const counts: Record<string, number> = {}
 
   if (memberIds.length > 0) {
-    const { data: reqs } = await service
+    const { data: reqs, error: reqsError } = await service
       .from('creative_requests')
       .select('contributor_id')
       .eq('context_id', id)
       .in('contributor_id', memberIds)
+    if (reqsError) return NextResponse.json({ error: 'Failed to load request counts' }, { status: 500 })
     for (const row of reqs ?? []) {
       counts[row.contributor_id] = (counts[row.contributor_id] ?? 0) + 1
     }
@@ -60,8 +66,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  if (!await getOwnedContext(supabase, id, user.id)) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  try {
+    if (!await getOwnedContext(supabase, id, user.id)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+  } catch {
+    return NextResponse.json({ error: 'Database error' }, { status: 500 })
   }
 
   let body: { userId?: string }
