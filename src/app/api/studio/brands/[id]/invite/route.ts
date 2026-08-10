@@ -22,12 +22,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const service = createServiceSupabaseClient()
-  const { data: invite, error: readError } = await service
+  const { data: existingInvite, error: readError } = await service
     .from('brand_invites').select('token').eq('context_id', id).single()
   if (readError && readError.code !== 'PGRST116') {
     return NextResponse.json({ error: 'Failed to read invite' }, { status: 500 })
   }
 
+  let invite = existingInvite
   if (!invite) {
     const { data: newInvite, error } = await service
       .from('brand_invites').insert({ context_id: id }).select('token').single()
