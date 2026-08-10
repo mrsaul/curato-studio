@@ -76,8 +76,13 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
       {templates.map(t => (
         <div key={t.id} style={{ background: 'var(--surface)', borderRadius: 12, padding: 12, marginBottom: 8, border: '1px solid var(--line-soft)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 13, color: 'var(--ink)', marginBottom: 2 }}>{t.name}</p>
-            <p style={{ fontSize: 10, color: 'var(--ink-faint)' }}>{TYPE_LABELS[t.type] ?? t.type}{t.description ? ` · ${t.description}` : ''}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: t.description ? 3 : 0 }}>
+              <p style={{ fontSize: 13, color: 'var(--ink)', margin: 0 }}>{t.name}</p>
+              <span style={{ fontSize: 9, fontFamily: 'var(--mono)', background: '#e8e4ff', color: '#4A3DB0', borderRadius: 4, padding: '2px 6px' }}>
+                {TYPE_LABELS[t.type] ?? t.type}
+              </span>
+            </div>
+            {t.description && <p style={{ fontSize: 10, color: 'var(--ink-faint)', margin: 0 }}>{t.description}</p>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
