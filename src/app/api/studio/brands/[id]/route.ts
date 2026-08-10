@@ -4,10 +4,10 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 async function getOwnedBrand(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, id: string, userId: string) {
   const { data } = await supabase
     .from('contexts')
-    .select('id, name, description, reviewer_id')
+    .select('id, name, description, user_id')
     .eq('id', id)
     .single()
-  if (!data || data.reviewer_id !== userId) return null
+  if (!data || data.user_id !== userId) return null
   return data
 }
 

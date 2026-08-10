@@ -9,8 +9,8 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
   if (!user) redirect('/login')
 
   const { data: ctx } = await supabase
-    .from('contexts').select('id, name, description, reviewer_id').eq('id', brandId).single()
-  if (!ctx || ctx.reviewer_id !== user.id) redirect('/studio')
+    .from('contexts').select('id, name, description, user_id').eq('id', brandId).single()
+  if (!ctx || ctx.user_id !== user.id) redirect('/studio')
 
   const [capsule, pending, templates, assets] = await Promise.all([
     supabase.from('capsules').select('rules').eq('context_id', brandId)

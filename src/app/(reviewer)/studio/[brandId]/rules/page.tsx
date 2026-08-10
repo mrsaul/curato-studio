@@ -10,8 +10,8 @@ export default async function RulesPage({ params }: { params: Promise<{ brandId:
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: ctx } = await supabase.from('contexts').select('name, reviewer_id').eq('id', brandId).single()
-  if (!ctx || ctx.reviewer_id !== user.id) redirect('/studio')
+  const { data: ctx } = await supabase.from('contexts').select('name, user_id').eq('id', brandId).single()
+  if (!ctx || ctx.user_id !== user.id) redirect('/studio')
 
   const { data: capsule } = await supabase
     .from('capsules').select('rules').eq('context_id', brandId)

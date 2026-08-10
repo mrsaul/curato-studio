@@ -9,7 +9,7 @@ export async function GET() {
   const { data: contexts } = await supabase
     .from('contexts')
     .select('id, name, description')
-    .eq('reviewer_id', user.id)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: true })
 
   if (!contexts) return NextResponse.json({ brands: [] })
@@ -57,13 +57,12 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('contexts')
-    .insert({ name: body.name.trim(), description: body.description?.trim() ?? '', reviewer_id: user.id })
+    .insert({ name: body.name.trim(), description: body.description?.trim() ?? '', user_id: user.id })
     .select('id, name, description')
     .single()
 
   if (error) {
-    console.error('[POST /api/studio/brands] Supabase error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to create brand' }, { status: 500 })
   }
   return NextResponse.json({ brand: data })
 }

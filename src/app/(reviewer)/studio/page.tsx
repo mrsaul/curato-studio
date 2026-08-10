@@ -11,7 +11,7 @@ export default async function StudioPage() {
   const { data: contexts } = await supabase
     .from('contexts')
     .select('id, name, description')
-    .eq('reviewer_id', user.id)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: true })
 
   const brands: AtelierBrand[] = await Promise.all((contexts ?? []).map(async (ctx) => {

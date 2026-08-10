@@ -10,8 +10,8 @@ export default async function TemplatesPage({ params }: { params: Promise<{ bran
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: ctx } = await supabase.from('contexts').select('name, reviewer_id').eq('id', brandId).single()
-  if (!ctx || ctx.reviewer_id !== user.id) redirect('/studio')
+  const { data: ctx } = await supabase.from('contexts').select('name, user_id').eq('id', brandId).single()
+  if (!ctx || ctx.user_id !== user.id) redirect('/studio')
 
   const { data: templates } = await supabase
     .from('templates').select('id, context_id, name, type, description, active, created_at')
