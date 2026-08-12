@@ -1,0 +1,101 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-family: var(--body);
+  text-decoration: none;
+  transition: opacity var(--duration-fast), background var(--duration-base), color var(--duration-base);
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── full-width ─── */
+.fullWidth {
+  width: 100%;
+}
+
+/* ─── primary — violet fill, rounded-xl ─── */
+.primary {
+  background: var(--violet);
+  color: var(--ink-on-dark);
+  border-radius: var(--r-xl);
+  font-size: var(--text-md);
+  min-height: var(--touch);
+  padding: 0 var(--space-4);
+}
+.primary:not(:disabled):hover { opacity: 0.88; }
+
+/* ─── cta — ink fill, pill, mono uppercase ─── */
+.cta {
+  background: var(--ink);
+  color: var(--ink-on-dark);
+  border-radius: var(--r-full);
+  font-size: var(--text-base);
+  font-family: var(--mono);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  min-height: var(--touch);
+  padding: 0 var(--space-4);
+}
+.cta:not(:disabled):hover { opacity: 0.82; }
+
+/* ─── action — green fill, pill ─── */
+.action {
+  background: var(--green);
+  color: var(--ink-on-dark);
+  border-radius: var(--r-full);
+  font-size: var(--text-md);
+  min-height: var(--touch);
+  padding: 0 var(--space-4);
+}
+.action:not(:disabled):hover { opacity: 0.88; }
+
+/* ─── ghost — red outline, pill ─── */
+.ghost {
+  background: transparent;
+  color: var(--red);
+  border: 1.5px solid var(--red);
+  border-radius: var(--r-full);
+  font-size: var(--text-md);
+  min-height: var(--touch);
+  padding: 0 var(--space-4);
+}
+.ghost:not(:disabled):hover { background: var(--red-soft); }
+
+/* ─── text — no bg, violet label ─── */
+.text {
+  background: none;
+  border: none;
+  color: var(--violet);
+  font-size: var(--text-base);
+  min-height: auto;
+  padding: 0;
+}
+.text:focus-visible { outline-offset: 4px; }
+.text:not(:disabled):hover { opacity: 0.72; }
+
+/* ─── compact — no bg, mono muted label ─── */
+.compact {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  font-family: var(--mono);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  min-height: auto;
+  padding: 0;
+}
+.compact:not(:disabled):hover { color: var(--ink-soft); }

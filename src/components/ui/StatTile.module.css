@@ -1,0 +1,95 @@
+.link {
+  text-decoration: none;
+  display: block;
+}
+
+/* wide tile spans full 2-col grid width */
+.wideLink {
+  grid-column: 1 / -1;
+}
+
+/* ─── Normal tile ─── */
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-xl);
+  padding: 14px;
+  transition: opacity var(--duration-fast);
+}
+
+.link:hover .tile,
+.link:hover .wideTile {
+  opacity: 0.82;
+}
+
+.link:focus-visible .tile,
+.link:focus-visible .wideTile {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: var(--r-xl);
+}
+
+/* pending (amber) variant */
+.tilePending {
+  background: var(--amber-surface);
+  border-color: var(--amber-border);
+}
+
+/* ─── Wide tile ─── */
+.wideTile {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 12px 14px;
+  transition: opacity var(--duration-fast);
+}
+
+/* ─── Tile typography ─── */
+.label {
+  font-size: var(--text-xs);
+  font-family: var(--mono);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--space-1);
+}
+
+.labelPending {
+  color: var(--amber-text);
+}
+
+.count {
+  font-size: var(--text-3xl);
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+
+.sub {
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.subPending {
+  color: var(--amber-text);
+}
+
+/* wide tile uses smaller count and horizontal label */
+.wideCount {
+  font-size: var(--text-xl);
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.wideLabel {
+  font-size: var(--text-xs);
+  font-family: var(--mono);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}

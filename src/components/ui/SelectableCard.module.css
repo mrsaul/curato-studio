@@ -1,0 +1,32 @@
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1.5px solid var(--line-soft);
+  border-radius: var(--r-xl);
+  padding: 14px var(--space-4);
+  transition:
+    border-color var(--duration-base),
+    background var(--duration-base);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+
+.card:not(.selected):not(:disabled):hover {
+  border-color: var(--line);
+}
+
+.selected {
+  background: var(--violet-subtle);
+  border: 2px solid var(--violet);
+}
+
+.card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
