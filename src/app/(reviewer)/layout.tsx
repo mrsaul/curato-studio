@@ -31,7 +31,7 @@ export default async function ReviewerLayout({ children }: { children: React.Rea
         </span>
         {count > 0 && (
           <span style={{
-            background: 'var(--violet)', color: '#fff',
+            background: 'var(--amber)', color: 'var(--amber-text)',
             borderRadius: 100, padding: '1px 7px',
             fontSize: 11, fontFamily: 'var(--mono)',
             letterSpacing: '0.02em',
@@ -43,7 +43,7 @@ export default async function ReviewerLayout({ children }: { children: React.Rea
       <main style={{ flex: 1, padding: '0 20px', paddingBottom: 96 }}>
         {children}
       </main>
-      <ReviewerBottomNav />
+      <ReviewerBottomNav pendingCount={count} />
     </div>
   )
 }

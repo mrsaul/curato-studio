@@ -1,11 +1,34 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Suspense } from 'react'
+import { Button } from '@/components/ui'
+
+function CheckCircle() {
+  return (
+    <div
+      className="success-circle"
+      style={{
+        width: 72, height: 72, borderRadius: '50%',
+        background: 'var(--green)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 'var(--space-6)',
+      }}
+    >
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <polyline
+          className="success-check"
+          points="7,16 13,22 25,10"
+          stroke="white" strokeWidth="2.5"
+          strokeLinecap="round" strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  )
+}
 
 function SentContent() {
   const router = useRouter()
-  const params = useSearchParams()
 
   return (
     <div style={{
@@ -13,30 +36,40 @@ function SentContent() {
       justifyContent: 'center', minHeight: 'calc(100dvh - 57px)',
       padding: '32px 0', textAlign: 'center',
     }}>
-      <div style={{ fontSize: 48, marginBottom: 24 }}>✓</div>
-      <p style={{ fontSize: 20, fontFamily: 'var(--display)', marginBottom: 8, lineHeight: 1.3 }}>
-        Sent to your reviewer
-      </p>
-      <p style={{ fontSize: 14, color: 'var(--ink-faint)', marginBottom: 40, lineHeight: 1.5, maxWidth: 260 }}>
-        We&apos;ll let you know when it&apos;s ready. You can check the status in your requests.
-      </p>
-      <button
-        onClick={() => router.push('/requests')}
+      <CheckCircle />
+
+      <h1
+        className="success-text-1"
         style={{
-          background: 'var(--surface)', color: 'var(--ink)',
-          border: '1.5px solid var(--line-soft)', borderRadius: 14,
-          padding: '0 28px', minHeight: 'var(--touch)', fontSize: 14,
-          marginBottom: 12, cursor: 'pointer',
+          fontSize: 'var(--text-2xl)', fontWeight: 400,
+          fontFamily: 'var(--display)', color: 'var(--ink)',
+          marginBottom: 'var(--space-2)', lineHeight: 'var(--leading-tight)',
         }}
       >
-        See my requests
-      </button>
-      <button
-        onClick={() => router.push('/submit')}
-        style={{ background: 'none', border: 'none', color: 'var(--violet)', fontSize: 14, minHeight: 'var(--touch)', cursor: 'pointer' }}
+        It&apos;s on its way!
+      </h1>
+      <p
+        className="success-text-2"
+        style={{
+          fontSize: 'var(--text-base)', color: 'var(--ink-faint)',
+          marginBottom: 'var(--space-10)', lineHeight: 'var(--leading-relaxed)',
+          maxWidth: 260,
+        }}
       >
-        Create another post
-      </button>
+        Your Art Director will review it soon. Check your history to see when it&apos;s approved.
+      </p>
+
+      <div
+        className="success-text-3"
+        style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}
+      >
+        <Button variant="cta" fullWidth onClick={() => router.push('/requests')}>
+          See my history
+        </Button>
+        <Button variant="text" onClick={() => router.push('/submit')}>
+          Create another post
+        </Button>
+      </div>
     </div>
   )
 }

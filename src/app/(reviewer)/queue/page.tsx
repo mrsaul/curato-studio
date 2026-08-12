@@ -71,6 +71,13 @@ function QueueCard({ request, index }: { request: CreativeRequest; index: number
           }}>
             {preview}
           </p>
+        ) : request.source_type === 'photo' && request.photo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={request.photo_url}
+            alt="Photo"
+            style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', marginBottom: 14, display: 'block' }}
+          />
         ) : (
           <p style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic', marginBottom: 14 }}>
             {request.source_type === 'photo' ? 'Photo upload' : 'Media post'}
@@ -95,7 +102,7 @@ function QueueCard({ request, index }: { request: CreativeRequest; index: number
             fontSize: 11, fontFamily: 'var(--mono)', letterSpacing: '0.06em',
             textTransform: 'uppercase', color: 'var(--ink-soft)',
           }}>
-            Review brief
+            Review
           </span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M2 7h10M8 3l4 4-4 4" stroke="var(--ink-soft)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -132,7 +139,7 @@ export default async function QueuePage() {
       }}>
         {queue.length === 0
           ? 'All clear — nothing pending.'
-          : `${queue.length} brief${queue.length !== 1 ? 's' : ''} waiting for your direction`}
+          : `${queue.length} post${queue.length !== 1 ? 's' : ''} waiting for your review`}
       </p>
 
       {queue.length === 0 ? (
@@ -150,7 +157,7 @@ export default async function QueuePage() {
             </svg>
           </div>
           <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>
-            Your creators will appear here when they send new briefs.
+            Your team will appear here when they send you new posts.
           </p>
         </div>
       ) : (

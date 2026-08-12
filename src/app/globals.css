@@ -1,32 +1,93 @@
 :root {
-  /* Surface — slightly warmer/friendlier than Curato */
+  /* ─── Surface ─── */
   --bg:        #F5EFE3;
   --surface:   #EDE6D8;
   --panel:     #E5DECF;
 
-  /* Ink */
-  --ink:       #1A1714;
-  --ink-soft:  #5E5448;
-  --ink-faint: #9B9284;
+  /* ─── Ink ─── */
+  --ink:        #1A1714;
+  --ink-soft:   #5E5448;
+  --ink-faint:  #6B6158;  /* darkened from #9B9284 — was 2.5:1, now 4.8:1 WCAG AA */
+  --ink-on-dark: #FFFFFF;
 
-  /* Line */
+  /* ─── Line ─── */
   --line:      #CBBFAA;
   --line-soft: #D9D2C2;
 
-  /* Accent */
-  --violet:      #4A3DB0;
-  --violet-soft: rgba(74, 61, 176, 0.10);
-  --green:       #1F7A50;
-  --green-soft:  rgba(31, 122, 80, 0.12);
-  --red:         #9E3442;
-  --amber:       #C27A1A;
+  /* ─── Accent ─── */
+  --violet:        #4A3DB0;
+  --violet-soft:   rgba(74, 61, 176, 0.10);
+  --violet-subtle: rgba(74, 61, 176, 0.06);
+  --green:         #1F7A50;
+  --green-soft:    rgba(31, 122, 80, 0.12);
+  --red:           #9E3442;
+  --red-soft:      rgba(158, 52, 66, 0.10);
+  --amber:         #C27A1A;   /* decorative tint source only — do not use as text */
+  --amber-surface: #FFF8E7;
+  --amber-border:  #EDD668;
+  --amber-text:    #7A5208;   /* 6.2:1 on --amber-surface */
 
-  /* Typography */
+  /* ─── Typography ─── */
   --display: 'ABCArizonaFlare', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --mono:    'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --body:    system-ui, -apple-system, sans-serif;
 
-  /* Touch */
+  /* Type scale */
+  --text-xs:   9px;
+  --text-sm:   11px;
+  --text-base: 13px;
+  --text-md:   15px;
+  --text-lg:   18px;
+  --text-xl:   22px;
+  --text-2xl:  26px;
+  --text-3xl:  28px;
+
+  /* Letter spacing */
+  --tracking-wide:   0.06em;
+  --tracking-wider:  0.08em;
+  --tracking-widest: 0.12em;
+
+  /* Line heights */
+  --leading-tight:   1.15;
+  --leading-snug:    1.3;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  /* ─── Spacing — 4px base ─── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --nav-clearance: 100px;
+
+  /* ─── Border radius ─── */
+  --r-sm:   8px;
+  --r-md:   10px;
+  --r-lg:   12px;
+  --r-xl:   14px;
+  --r-full: 9999px;
+
+  /* ─── Shadow / Elevation ─── */
+  --shadow-nav: 0 4px 28px rgba(26, 23, 20, 0.28);
+
+  /* ─── Motion ─── */
+  --duration-fast:   0.12s;
+  --duration-base:   0.15s;
+  --duration-appear: 0.25s;
+  --duration-slow:   0.35s;
+  --ease-standard:   ease;
+  --ease-decel:      cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-accel:      cubic-bezier(0.4, 0.0, 1, 1);
+  --ease-spring:     cubic-bezier(0.175, 0.885, 0.32, 1.1);
+
+  /* ─── Touch target ─── */
   --touch: 48px;
 }
 
@@ -52,11 +113,77 @@ input, textarea { font-family: inherit; }
 }
 
 .fade-up {
-  animation: fadeUp 0.35s ease both;
+  animation: fadeUp var(--duration-appear) var(--ease-standard) both;
 }
 .fade-up-1 { animation-delay: 0.05s; }
 .fade-up-2 { animation-delay: 0.12s; }
 .fade-up-3 { animation-delay: 0.19s; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.pulse {
+  animation: pulse 1.6s var(--ease-standard) infinite;
+}
+
+/* ─── Success: circle entrance ─── */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Success: checkmark stroke draw ─── */
+@keyframes checkDraw {
+  from { stroke-dashoffset: 40; opacity: 0; }
+  to   { stroke-dashoffset: 0;  opacity: 1; }
+}
+
+/* ─── Queue: card exit left (approve) ─── */
+@keyframes slideOutLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-40px); }
+}
+
+/* ─── Queue: card exit right (decline) ─── */
+@keyframes slideOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(40px); }
+}
+
+.success-circle {
+  animation: scaleIn var(--duration-slow) var(--ease-spring) both;
+}
+
+.success-check {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: checkDraw var(--duration-slow) var(--ease-decel) both;
+  animation-delay: calc(var(--duration-slow) * 0.55);
+}
+
+.card-exit-left {
+  animation: slideOutLeft var(--duration-appear) var(--ease-accel) forwards;
+}
+
+.card-exit-right {
+  animation: slideOutRight var(--duration-appear) var(--ease-accel) forwards;
+}
+
+/* ─── Success state text stagger (timed after circle+check complete) ─── */
+.success-text-1 {
+  animation: fadeUp var(--duration-appear) var(--ease-decel) both;
+  animation-delay: 0.4s;
+}
+.success-text-2 {
+  animation: fadeUp var(--duration-appear) var(--ease-decel) both;
+  animation-delay: 0.55s;
+}
+.success-text-3 {
+  animation: fadeUp var(--duration-appear) var(--ease-decel) both;
+  animation-delay: 0.65s;
+}
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

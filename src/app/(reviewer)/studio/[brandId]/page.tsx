@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { StatTile } from '@/components/ui'
 
 export default async function BrandDetailPage({ params }: { params: Promise<{ brandId: string }> }) {
   const { brandId } = await params
@@ -42,36 +43,18 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
   return (
     <div style={{ paddingTop: 24, paddingBottom: 100 }}>
       <Link href="/studio" style={{ textDecoration: 'none', fontSize: 12, color: 'var(--ink-faint)', display: 'block', marginBottom: 12 }}>← Studio</Link>
-      <h1 style={{ fontSize: 26, fontWeight: 400, color: 'var(--ink)', marginBottom: 2 }}>{ctx.name}</h1>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 2 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>{ctx.name}</h1>
+        <Link href={`/studio/${brandId}/edit`} style={{
+          fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
+          textDecoration: 'none', letterSpacing: '0.04em',
+        }}>Edit</Link>
+      </div>
       {ctx.description && <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginBottom: 20 }}>{ctx.description}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
         {tiles.map(tile => (
-          <Link key={tile.href} href={tile.href} style={{ textDecoration: 'none', ...(tile.wide ? { gridColumn: '1 / -1' } : {}) }}>
-            {tile.wide ? (
-              <div style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--line-soft)',
-                borderRadius: 14,
-                display: 'flex', alignItems: 'center', gap: 16, padding: '12px 14px',
-              }}>
-                <p style={{ fontSize: 22, fontWeight: 300, color: 'var(--ink)', lineHeight: 1 }}>{tile.count}</p>
-                <p style={{ fontSize: 9, fontFamily: 'var(--mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{tile.label}</p>
-              </div>
-            ) : (
-              <div style={{
-                background: tile.pending ? '#fffbe8' : 'var(--surface)',
-                border: `1px solid ${tile.pending ? '#f0d060' : 'var(--line-soft)'}`,
-                borderRadius: 14, padding: 14,
-              }}>
-                <p style={{ fontSize: 9, fontFamily: 'var(--mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: tile.pending ? '#c9960a' : 'var(--ink-faint)', marginBottom: 6 }}>
-                  {tile.label}{tile.pending ? ' ●' : ''}
-                </p>
-                <p style={{ fontSize: 28, fontWeight: 300, color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>{tile.count}</p>
-                <p style={{ fontSize: 10, color: tile.pending ? '#c9960a' : 'var(--ink-faint)' }}>{tile.sub}</p>
-              </div>
-            )}
-          </Link>
+          <StatTile key={tile.href} {...tile} />
         ))}
       </div>
     </div>

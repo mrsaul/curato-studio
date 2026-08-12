@@ -13,18 +13,29 @@ export default async function SubmitPage() {
     .eq('user_id', user.id)
 
   if (membershipsError) redirect('/login')
+
   if (!memberships || memberships.length === 0) {
     return (
-      <div style={{ paddingTop: 40, paddingBottom: 32 }}>
-        <p style={{ fontSize: 10, fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-faint)', marginBottom: 20 }}>
-          New brief
-        </p>
-        <h1 style={{ fontSize: 34, fontWeight: 400, fontFamily: 'var(--display)', letterSpacing: '-0.025em', lineHeight: 1.15, color: 'var(--ink)', marginBottom: 16 }}>
-          No brands yet
+      <div style={{ paddingTop: 48, paddingBottom: 32 }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 'var(--r-xl)',
+          background: 'var(--surface)', border: '1px solid var(--line-soft)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          marginBottom: 'var(--space-6)',
+          fontSize: 24,
+        }}>
+          ✉️
+        </div>
+        <h1 style={{
+          fontSize: 'var(--text-2xl)', fontWeight: 400,
+          fontFamily: 'var(--display)', color: 'var(--ink)',
+          marginBottom: 'var(--space-4)', lineHeight: 'var(--leading-tight)',
+        }}>
+          You&apos;re not connected<br />to any brand yet
         </h1>
-        <div style={{ width: 32, height: 1, background: 'var(--line)', marginBottom: 20 }} />
-        <p style={{ fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.6, maxWidth: 260 }}>
-          Ask your Art Director for an invite link to get started.
+        <div style={{ width: 32, height: 1, background: 'var(--line)', marginBottom: 'var(--space-5)' }} />
+        <p style={{ fontSize: 'var(--text-base)', color: 'var(--ink-soft)', lineHeight: 'var(--leading-relaxed)', maxWidth: 280 }}>
+          Ask whoever manages the brand to send you an invite link.
         </p>
       </div>
     )

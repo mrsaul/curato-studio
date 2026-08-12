@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getReviewerHistory } from '@/lib/requests'
 import { CreativeRequest, RequestStatus } from '@/types/request'
@@ -37,10 +38,10 @@ function HistoryCard({ request }: { request: CreativeRequest }) {
   const preview = input ? (input.length > 100 ? input.slice(0, 100) + '…' : input) : null
 
   return (
+    <Link href={`/queue/${request.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', marginBottom: 10 }}>
     <article style={{
       background: 'var(--surface)',
       borderRadius: 14,
-      marginBottom: 10,
       border: '1px solid var(--line-soft)',
       overflow: 'hidden',
     }}>
@@ -89,6 +90,7 @@ function HistoryCard({ request }: { request: CreativeRequest }) {
         </div>
       </div>
     </article>
+    </Link>
   )
 }
 

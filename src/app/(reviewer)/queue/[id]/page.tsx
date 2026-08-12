@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getRequest, getRequestDraft } from '@/lib/requests'
 import CaptionPicker from './CaptionPicker'
+import { QueueExitProvider } from './exit-context'
+import { SectionLabel } from '@/components/ui'
 
 export default async function RequestDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerSupabaseClient()
@@ -16,6 +18,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   const draft = await getRequestDraft(supabase, request.id)
 
   return (
+    <QueueExitProvider>
     <div style={{ paddingTop: 24, paddingBottom: 32 }}>
       {/* Back */}
       <Link href="/queue" style={{
@@ -33,12 +36,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       {/* Photo (if present) */}
       {request.photo_url && (
         <section style={{ marginBottom: 24 }}>
-          <p style={{
-            fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-            textTransform: 'uppercase', marginBottom: 8,
-          }}>
-            Photo
-          </p>
+          <SectionLabel marginBottom={8}>Photo</SectionLabel>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={request.photo_url}
@@ -50,12 +48,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
       {/* Original input */}
       <section style={{ marginBottom: 24 }}>
-        <p style={{
-          fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-          textTransform: 'uppercase', marginBottom: 8,
-        }}>
-          Original — {request.source_type}
-        </p>
+        <SectionLabel marginBottom={8}>Original — {request.source_type}</SectionLabel>
         <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '12px 14px' }}>
           <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, margin: 0 }}>
             {request.transcript ?? request.raw_text ?? '(media upload)'}
@@ -66,12 +59,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       {/* Interpretation */}
       {request.intent_summary && (
         <section style={{ marginBottom: 24 }}>
-          <p style={{
-            fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-            textTransform: 'uppercase', marginBottom: 8,
-          }}>
-            Interpretation
-          </p>
+          <SectionLabel marginBottom={8}>Interpretation</SectionLabel>
           <p style={{ fontSize: 14, color: 'var(--violet)', lineHeight: 1.5, margin: 0 }}>
             {request.intent_summary}
           </p>
@@ -82,12 +70,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       {draft ? (
         <>
           <section style={{ marginBottom: 16 }}>
-            <p style={{
-              fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-              textTransform: 'uppercase', marginBottom: 8,
-            }}>
-              Caption — edit &amp; approve
-            </p>
+            <SectionLabel marginBottom={8}>Caption — edit &amp; approve</SectionLabel>
             {request.status === 'awaiting_review' ? (
               <CaptionPicker
                 requestId={request.id}
@@ -126,10 +109,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           {/* CTA */}
           {draft.cta && (
             <section style={{ marginBottom: 16 }}>
-              <p style={{
-                fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-                textTransform: 'uppercase', marginBottom: 6,
-              }}>CTA</p>
+              <SectionLabel marginBottom={6}>CTA</SectionLabel>
               <p style={{ fontSize: 14, color: 'var(--ink)', margin: 0 }}>{draft.cta}</p>
             </section>
           )}
@@ -137,10 +117,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           {/* Hashtags */}
           {draft.hashtags.length > 0 && (
             <section style={{ marginBottom: 16 }}>
-              <p style={{
-                fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-                textTransform: 'uppercase', marginBottom: 6,
-              }}>Hashtags</p>
+              <SectionLabel marginBottom={6}>Hashtags</SectionLabel>
               <p style={{ fontSize: 13, color: 'var(--ink-soft)', margin: 0 }}>
                 {draft.hashtags.map(h => `#${h}`).join(' ')}
               </p>
@@ -150,10 +127,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           {/* Visual brief */}
           {draft.visual_brief && (
             <section style={{ marginBottom: 16 }}>
-              <p style={{
-                fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-                textTransform: 'uppercase', marginBottom: 6,
-              }}>Visual brief</p>
+              <SectionLabel marginBottom={6}>Visual brief</SectionLabel>
               <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>
                 {draft.visual_brief}
               </p>
@@ -179,5 +153,6 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         <p style={{ color: 'var(--ink-faint)', fontSize: 14 }}>Draft is being generated…</p>
       )}
     </div>
+    </QueueExitProvider>
   )
 }

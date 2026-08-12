@@ -23,7 +23,7 @@ const StudioIcon = () => (
   </svg>
 )
 
-export default function ReviewerBottomNav() {
+export default function ReviewerBottomNav({ pendingCount = 0 }: { pendingCount?: number }) {
   const pathname = usePathname()
 
   const tabs = [
@@ -32,18 +32,21 @@ export default function ReviewerBottomNav() {
       href: '/queue',
       icon: <InboxIcon />,
       active: pathname === '/queue' || pathname.startsWith('/queue/'),
+      showDot: pendingCount > 0,
     },
     {
       label: 'DONE',
       href: '/history',
       icon: <ClockIcon />,
       active: pathname === '/history',
+      showDot: false,
     },
     {
       label: 'STUDIO',
       href: '/studio',
       icon: <StudioIcon />,
       active: pathname === '/studio' || pathname.startsWith('/studio/'),
+      showDot: false,
     },
   ]
 
@@ -82,7 +85,16 @@ export default function ReviewerBottomNav() {
             whiteSpace: 'nowrap',
           }}
         >
-          {tab.icon}
+          <span style={{ position: 'relative', display: 'inline-flex' }}>
+            {tab.icon}
+            {tab.showDot && (
+              <span style={{
+                position: 'absolute', top: -2, right: -3,
+                width: 6, height: 6, borderRadius: '50%',
+                background: 'var(--amber)',
+              }} />
+            )}
+          </span>
           {tab.label}
         </Link>
       ))}

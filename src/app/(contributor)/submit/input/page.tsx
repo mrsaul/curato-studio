@@ -2,10 +2,17 @@
 
 import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Button, InlineError } from '@/components/ui'
 import PhotoEditor, { PhotoEditorHandle } from './PhotoEditor'
 
 type InputMode = 'text' | 'voice' | 'photo'
 type RecordingState = 'idle' | 'recording' | 'processing'
+
+const modeLabel: Record<InputMode, string> = {
+  text: 'Write',
+  voice: 'Voice note',
+  photo: 'Photo',
+}
 
 function InputPageInner() {
   const router = useRouter()
@@ -32,7 +39,7 @@ function InputPageInner() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     } catch {
-      setError('Microphone access denied. Please allow microphone access and try again.')
+      setError('Microphone access is off. Check your phone\'s settings to allow it.')
       return
     }
     const recorder = new MediaRecorder(stream)
@@ -48,9 +55,9 @@ function InputPageInner() {
         const res = await fetch('/api/transcribe', { method: 'POST', body: fd })
         const json = await res.json() as { transcript?: string; error?: string }
         if (json.transcript) setTranscript(json.transcript)
-        else setError(json.error ?? 'Transcription failed')
+        else setError(json.error ?? 'Could not understand the recording — please try again.')
       } catch {
-        setError('Could not transcribe audio')
+        setError('Could not send the recording — please try again.')
       }
       setRecordingState('idle')
     }
@@ -103,7 +110,7 @@ function InputPageInner() {
         carry.set('mode', 'photo')
         router.push(`/submit/confirm?${carry.toString()}`)
       } catch {
-        setError('Could not export photo. Please try again.')
+        setError('Could not save the photo. Please try again.')
         setExporting(false)
       }
       return
@@ -117,22 +124,38 @@ function InputPageInner() {
   const ok = canContinue()
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
-    flex: 1, padding: '10px 0', fontSize: 13,
+    flex: 1, padding: '10px 4px', fontSize: 'var(--text-sm)',
+    fontFamily: 'var(--mono)', letterSpacing: 'var(--tracking-wide)',
+    textTransform: 'uppercase',
     background: active ? 'var(--violet)' : 'var(--surface)',
-    color: active ? '#fff' : 'var(--ink-soft)',
+    color: active ? 'var(--ink-on-dark)' : 'var(--ink-soft)',
     border: 'none', cursor: 'pointer', minHeight: 'var(--touch)',
+    transition: 'background var(--duration-base), color var(--duration-base)',
   })
 
   return (
     <div style={{ paddingTop: 24, paddingBottom: 32 }}>
-      <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', marginBottom: 28, border: '1.5px solid var(--line-soft)' }}>
+      <h1 style={{
+        fontSize: 'var(--text-2xl)', fontWeight: 400,
+        fontFamily: 'var(--display)', color: 'var(--ink)',
+        marginBottom: 'var(--space-5)', lineHeight: 'var(--leading-tight)',
+      }}>
+        What&apos;s the idea?
+      </h1>
+
+      {/* Mode switcher */}
+      <div style={{
+        display: 'flex', borderRadius: 'var(--r-md)', overflow: 'hidden',
+        marginBottom: 'var(--space-6)', border: '1.5px solid var(--line-soft)',
+      }}>
         {(['text', 'voice', 'photo'] as InputMode[]).map(m => (
-          <button key={m} onClick={() => setMode(m)} style={tabStyle(mode === m)}>
-            {m.charAt(0).toUpperCase() + m.slice(1)}
+          <button key={m} onClick={() => { setMode(m); setError(null) }} style={tabStyle(mode === m)}>
+            {modeLabel[m]}
           </button>
         ))}
       </div>
 
+      {/* Write */}
       {mode === 'text' && (
         <textarea
           value={text}
@@ -140,43 +163,63 @@ function InputPageInner() {
           placeholder="Write what you'd like to share…"
           rows={6}
           style={{
-            width: '100%', padding: '14px', borderRadius: 10,
+            width: '100%', padding: 'var(--space-4)', borderRadius: 'var(--r-md)',
             border: '1.5px solid var(--line-soft)', background: 'var(--surface)',
-            color: 'var(--ink)', fontSize: 15, resize: 'none', fontFamily: 'var(--body)',
-            lineHeight: 1.5, outline: 'none',
+            color: 'var(--ink)', fontSize: 'var(--text-md)', resize: 'none',
+            fontFamily: 'var(--body)', lineHeight: 'var(--leading-normal)', outline: 'none',
+            boxSizing: 'border-box',
           }}
         />
       )}
 
+      {/* Voice note */}
       {mode === 'voice' && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          {recordingState === 'processing' && (
-            <p style={{ color: 'var(--ink-faint)', fontSize: 13 }}>Transcribing…</p>
-          )}
-          {recordingState !== 'processing' && (
-            <button
-              onPointerDown={startRecording}
-              onPointerUp={stopRecording}
-              onPointerLeave={stopRecording}
-              style={{
-                width: 80, height: 80, borderRadius: '50%',
-                background: recordingState === 'recording' ? 'var(--red)' : 'var(--violet)',
-                border: 'none', color: '#fff', fontSize: 13,
-              }}
-            >
-              {recordingState === 'recording' ? 'Stop' : 'Hold'}
-            </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-4)' }}>
+          {recordingState === 'processing' ? (
+            <p className="pulse" style={{ color: 'var(--ink-faint)', fontSize: 'var(--text-base)', marginTop: 16 }}>
+              Working on it…
+            </p>
+          ) : (
+            <>
+              <button
+                onPointerDown={startRecording}
+                onPointerUp={stopRecording}
+                onPointerLeave={stopRecording}
+                style={{
+                  width: 80, height: 80, borderRadius: '50%',
+                  background: recordingState === 'recording' ? 'var(--red)' : 'var(--violet)',
+                  border: 'none', color: 'var(--ink-on-dark)',
+                  fontSize: 10, fontFamily: 'var(--mono)',
+                  letterSpacing: 0, lineHeight: 1.3, textAlign: 'center',
+                  cursor: 'pointer',
+                  boxShadow: recordingState === 'recording' ? '0 0 0 8px var(--red-soft)' : 'none',
+                  transition: 'background var(--duration-base), box-shadow var(--duration-base)',
+                }}
+              >
+                {recordingState === 'recording' ? 'Release\nto stop' : 'Hold to\nrecord'}
+              </button>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-faint)', textAlign: 'center' }}>
+                {recordingState === 'recording' ? 'Recording…' : 'Hold the button and speak'}
+              </p>
+            </>
           )}
           {transcript && (
-            <p style={{ fontSize: 14, color: 'var(--ink)', background: 'var(--surface)', padding: '12px 14px', borderRadius: 10, lineHeight: 1.5, width: '100%' }}>
-              {transcript}
-            </p>
+            <div style={{
+              background: 'var(--surface)', borderRadius: 'var(--r-md)',
+              padding: 'var(--space-4)', width: '100%',
+              border: '1px solid var(--line-soft)',
+            }}>
+              <p style={{ fontSize: 'var(--text-base)', color: 'var(--ink)', lineHeight: 'var(--leading-relaxed)', margin: 0 }}>
+                {transcript}
+              </p>
+            </div>
           )}
         </div>
       )}
 
+      {/* Photo */}
       {mode === 'photo' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <input
             ref={fileInputRef}
             type="file"
@@ -188,44 +231,41 @@ function InputPageInner() {
           {photoUrl ? (
             <>
               <PhotoEditor ref={photoEditorRef} sourceUrl={photoUrl} />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{ fontSize: 13, color: 'var(--violet)', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                Change photo
-              </button>
+              <Button variant="text" onClick={() => fileInputRef.current?.click()}>
+                Use a different photo
+              </Button>
             </>
           ) : (
             <button
               onClick={() => fileInputRef.current?.click()}
               style={{
-                width: '100%', minHeight: 180, borderRadius: 10, background: 'var(--surface)',
-                border: '2px dashed var(--line-soft)', color: 'var(--ink-faint)', fontSize: 14, cursor: 'pointer',
+                width: '100%', minHeight: 180, borderRadius: 'var(--r-md)',
+                background: 'var(--surface)', border: '2px dashed var(--line-soft)',
+                color: 'var(--ink-faint)', fontSize: 'var(--text-base)', cursor: 'pointer',
               }}
             >
-              Tap to take or choose a photo
+              Add a photo
             </button>
           )}
         </div>
       )}
 
       {error && (
-        <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 12 }}>{error}</p>
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <InlineError>{error}</InlineError>
+        </div>
       )}
 
-      <button
-        onClick={handleContinue}
-        disabled={!ok || exporting}
-        style={{
-          marginTop: 32, width: '100%', minHeight: 'var(--touch)',
-          background: ok && !exporting ? 'var(--violet)' : 'var(--surface)',
-          color: ok && !exporting ? '#fff' : 'var(--ink-faint)',
-          border: 'none', borderRadius: 14, fontSize: 15,
-          cursor: ok && !exporting ? 'pointer' : 'not-allowed',
-        }}
-      >
-        {exporting ? 'Preparing…' : 'Continue'}
-      </button>
+      <div style={{ marginTop: 'var(--space-8)' }}>
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={handleContinue}
+          disabled={!ok || exporting}
+        >
+          {exporting ? 'One moment…' : 'Continue'}
+        </Button>
+      </div>
     </div>
   )
 }

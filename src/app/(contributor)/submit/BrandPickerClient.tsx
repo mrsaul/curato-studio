@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button, SelectableCard, SectionLabel } from '@/components/ui'
 
 interface Brand {
   id: string
@@ -32,57 +33,36 @@ export default function BrandPickerClient({ brands }: Props) {
 
   return (
     <div style={{ paddingTop: 24, paddingBottom: 32 }}>
-      <p style={{ fontSize: 10, fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-faint)', marginBottom: 16 }}>
-        New brief
-      </p>
-      <h1 style={{ fontSize: 26, fontWeight: 400, fontFamily: 'var(--display)', letterSpacing: '-0.02em', lineHeight: 1.15, color: 'var(--ink)', marginBottom: 6 }}>
-        Working for
+      <SectionLabel marginBottom="var(--space-4)">New post</SectionLabel>
+      <h1 style={{
+        fontSize: 26, fontWeight: 400, fontFamily: 'var(--display)',
+        letterSpacing: '-0.02em', lineHeight: 1.15, color: 'var(--ink)', marginBottom: 6,
+      }}>
+        Which brand?
       </h1>
       <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 24, lineHeight: 1.5 }}>
-        Choose the brand this brief is for
+        Choose the brand this post is for
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
         {brands.map(brand => {
           const isSelected = selected?.id === brand.id
           return (
-            <button
+            <SelectableCard
               key={brand.id}
+              selected={isSelected}
               onClick={() => setSelected(brand)}
-              style={{
-                textAlign: 'left', cursor: 'pointer', width: '100%',
-                background: 'var(--surface)',
-                border: isSelected ? '2px solid var(--violet)' : '1.5px solid var(--line-soft)',
-                borderRadius: 14, padding: '14px 16px',
-              }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 15, fontWeight: isSelected ? 500 : 400, color: 'var(--ink)', marginBottom: 2 }}>
+                  <p style={{ fontSize: 15, fontWeight: isSelected ? 500 : 400, color: 'var(--ink)', marginBottom: brand.description ? 2 : 0 }}>
                     {brand.name}
                   </p>
                   {brand.description && (
-                    <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginBottom: 8 }}>
+                    <p style={{ fontSize: 12, color: 'var(--ink-faint)', lineHeight: 1.4 }}>
                       {brand.description}
                     </p>
                   )}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {brand.ruleCount > 0 && (
-                      <span style={{ fontSize: 9, fontFamily: 'var(--mono)', background: 'rgba(74,61,176,0.08)', color: 'var(--violet)', borderRadius: 4, padding: '2px 5px' }}>
-                        {brand.ruleCount} rules
-                      </span>
-                    )}
-                    {brand.templateCount > 0 && (
-                      <span style={{ fontSize: 9, fontFamily: 'var(--mono)', background: 'var(--bg)', color: 'var(--ink-faint)', borderRadius: 4, padding: '2px 5px' }}>
-                        {brand.templateCount} templates
-                      </span>
-                    )}
-                    {brand.assetCount > 0 && (
-                      <span style={{ fontSize: 9, fontFamily: 'var(--mono)', background: 'var(--bg)', color: 'var(--ink-faint)', borderRadius: 4, padding: '2px 5px' }}>
-                        {brand.assetCount} assets
-                      </span>
-                    )}
-                  </div>
                 </div>
                 <div style={{
                   width: 20, height: 20, borderRadius: '50%', flexShrink: 0, marginLeft: 12,
@@ -93,25 +73,19 @@ export default function BrandPickerClient({ brands }: Props) {
                   {isSelected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
                 </div>
               </div>
-            </button>
+            </SelectableCard>
           )
         })}
       </div>
 
-      <button
+      <Button
+        variant="cta"
+        fullWidth
         onClick={handleStart}
         disabled={!selected}
-        style={{
-          width: '100%', minHeight: 52, borderRadius: 100,
-          background: selected ? 'var(--ink)' : 'var(--surface)',
-          color: selected ? '#fff' : 'var(--ink-faint)',
-          border: 'none', fontSize: 13, fontFamily: 'var(--mono)',
-          letterSpacing: '0.06em', textTransform: 'uppercase',
-          cursor: selected ? 'pointer' : 'not-allowed',
-        }}
       >
-        {selected ? `Start with ${selected.name}` : 'Select a brand'}
-      </button>
+        {selected ? `Continue with ${selected.name}` : 'Select a brand'}
+      </Button>
     </div>
   )
 }

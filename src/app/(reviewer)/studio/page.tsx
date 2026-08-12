@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { AtelierBrand } from '@/types/brand'
+import { DashedCard } from '@/components/ui'
 
 export default async function StudioPage() {
   const supabase = await createServerSupabaseClient()
@@ -64,20 +65,18 @@ export default async function StudioPage() {
             {brand.description && (
               <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginBottom: 8 }}>{brand.description}</p>
             )}
-            <p style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', letterSpacing: '0.04em' }}>
-              {brand.ruleCount} rules · {brand.templateCount} templates · {brand.assetCount} assets
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--ink-faint)', letterSpacing: '0.04em', margin: 0 }}>
+                {brand.ruleCount} rules · {brand.templateCount} templates · {brand.assetCount} assets
+              </p>
+              <span style={{ fontSize: 13, color: 'var(--ink-faint)' }}>→</span>
+            </div>
           </div>
         </Link>
       ))}
 
       <Link href="/studio/new" style={{ textDecoration: 'none', display: 'block' }}>
-        <div style={{
-          border: '1.5px dashed var(--line-soft)', borderRadius: 14, padding: '14px 16px',
-          textAlign: 'center', color: 'var(--violet)', fontSize: 13,
-        }}>
-          + New brand
-        </div>
+        <DashedCard accent>+ New brand</DashedCard>
       </Link>
     </div>
   )

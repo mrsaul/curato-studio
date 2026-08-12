@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { CaptionOption } from '@/types/request'
+import { Button, SectionLabel, InlineError } from '@/components/ui'
+import { useQueueExit } from './exit-context'
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -28,7 +29,7 @@ export default function CaptionPicker({
   options: CaptionOption[]
   recommendedCaption: string | null
 }) {
-  const router = useRouter()
+  const triggerExit = useQueueExit()
   const [caption, setCaption] = useState(recommendedCaption ?? options[0]?.text ?? '')
   const [direction, setDirection] = useState('')
   const [notes, setNotes] = useState('')
@@ -82,8 +83,7 @@ export default function CaptionPicker({
       })
       const json = await res.json() as { ok?: boolean; error?: string }
       if (!res.ok || !json.ok) throw new Error(json.error ?? 'Review failed')
-      router.push('/queue')
-      router.refresh()
+      triggerExit(decision === 'approved' ? 'left' : 'right')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
       setSubmitting(false)
@@ -95,12 +95,7 @@ export default function CaptionPicker({
   return (
     <div>
       {/* Editable caption — always open */}
-      <p style={{
-        fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-        textTransform: 'uppercase', marginBottom: 8,
-      }}>
-        Caption
-      </p>
+      <SectionLabel marginBottom={8}>Caption</SectionLabel>
       <textarea
         value={caption}
         onChange={e => setCaption(e.target.value)}
@@ -110,12 +105,7 @@ export default function CaptionPicker({
       />
 
       {/* Improve with AI */}
-      <p style={{
-        fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-        textTransform: 'uppercase', marginBottom: 8,
-      }}>
-        Improve with AI
-      </p>
+      <SectionLabel marginBottom={8}>Improve with AI</SectionLabel>
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <input
           type="text"
@@ -187,12 +177,7 @@ export default function CaptionPicker({
       )}
 
       {/* Notes for creator */}
-      <p style={{
-        fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--ink-faint)',
-        textTransform: 'uppercase', marginBottom: 8,
-      }}>
-        Notes for creator (optional)
-      </p>
+      <SectionLabel marginBottom={8}>Notes for creator (optional)</SectionLabel>
       <textarea
         value={notes}
         onChange={e => setNotes(e.target.value)}
@@ -203,36 +188,22 @@ export default function CaptionPicker({
       />
 
       {error && (
-        <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>{error}</p>
+        <div style={{ marginBottom: 16 }}>
+          <InlineError>{error}</InlineError>
+        </div>
       )}
 
       {/* Approve */}
-      <button
-        onClick={() => handleDecision('approved')}
-        disabled={disabled}
-        style={{
-          width: '100%', minHeight: 'var(--touch)', borderRadius: 100,
-          background: 'var(--green)', color: '#fff', border: 'none', fontSize: 15,
-          marginBottom: 10, opacity: disabled ? 0.6 : 1,
-          cursor: disabled ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {submitting ? 'Sending…' : '✓ Approve & send to creator'}
-      </button>
+      <div style={{ marginBottom: 10 }}>
+        <Button variant="action" fullWidth onClick={() => handleDecision('approved')} disabled={disabled}>
+          {submitting ? 'Sending…' : '✓ Approve & send to creator'}
+        </Button>
+      </div>
 
       {/* Decline */}
-      <button
-        onClick={() => handleDecision('declined')}
-        disabled={disabled}
-        style={{
-          width: '100%', minHeight: 'var(--touch)', borderRadius: 14,
-          background: 'none', color: 'var(--red)',
-          border: '1.5px solid var(--red)', fontSize: 15,
-          opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'pointer',
-        }}
-      >
+      <Button variant="ghost" fullWidth onClick={() => handleDecision('declined')} disabled={disabled}>
         Decline
-      </button>
+      </Button>
     </div>
   )
 }

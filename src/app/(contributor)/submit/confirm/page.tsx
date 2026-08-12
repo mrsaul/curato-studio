@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { Button, SelectableCard, SectionLabel, InlineError } from '@/components/ui'
 
 type Phase = 'idle' | 'generating' | 'choosing' | 'sending'
 
@@ -48,7 +49,6 @@ function ConfirmContent() {
       .then(({ data }) => {
         if (!mounted) return
         if (!data.user) { router.replace('/login'); return }
-        // If brandId + reviewerId came from URL, skip the API call
         if (brandId && reviewerIdParam) return
         return fetch('/api/reviewer')
           .then(r => r.json())
@@ -98,7 +98,7 @@ function ConfirmContent() {
     return () => { if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl) }
   }, [photoPreviewUrl])
 
-  async function handleGenerateOptions() {
+  async function handleGetCaptionIdeas() {
     if (!reviewerId) { setError('No reviewer found'); return }
     setPhase('generating')
     setError(null)
@@ -148,7 +148,7 @@ function ConfirmContent() {
       const interpretJson = await interpretRes.json() as { status?: string }
 
       if (interpretJson.status !== 'draft_ready') {
-        throw new Error('Could not interpret your input — please try again')
+        throw new Error('Could not understand your input — please go back and try again')
       }
 
       const draftRes = await fetch('/api/draft', {
@@ -156,9 +156,9 @@ function ConfirmContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: reqId }),
       })
-      if (!draftRes.ok) throw new Error('Caption generation failed')
+      if (!draftRes.ok) throw new Error('Could not write caption ideas')
       const draftJson = await draftRes.json() as { draft?: Draft; error?: string }
-      if (!draftJson.draft) throw new Error(draftJson.error ?? 'Draft generation failed')
+      if (!draftJson.draft) throw new Error(draftJson.error ?? 'Could not write caption ideas')
 
       sessionStorage.removeItem('photo_blob_b64')
       setDraftId(draftJson.draft.id)
@@ -170,7 +170,7 @@ function ConfirmContent() {
     }
   }
 
-  async function handleSendToDirector() {
+  async function handleSendForReview() {
     if (!selectedCaption || !draftId || !requestId) return
     setPhase('sending')
     setError(null)
@@ -180,7 +180,7 @@ function ConfirmContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft_id: draftId, request_id: requestId, chosen_caption: selectedCaption }),
       })
-      if (!res.ok) throw new Error('Failed to send to Director')
+      if (!res.ok) throw new Error('Failed to send for review')
       router.push(`/submit/sent?id=${requestId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
@@ -188,24 +188,28 @@ function ConfirmContent() {
     }
   }
 
+  function handleTryAgain() {
+    setPhase('idle')
+    setSelectedCaption(null)
+    setCaptionOptions([])
+    setDraftId(null)
+    setRequestId(null)
+    setError(null)
+  }
+
   const inputSummary = mode === 'voice' ? transcript : text
 
+  // Photo missing error state
   if (mode === 'photo' && photoMissing) {
     return (
       <div style={{ paddingTop: 24 }}>
-        <p style={{ color: 'var(--red)', marginBottom: 16 }}>
-          Photo not found — please go back and try again.
-        </p>
-        <button
-          onClick={() => router.back()}
-          style={{ background: 'none', border: 'none', color: 'var(--violet)', cursor: 'pointer', fontSize: 14 }}
-        >
-          ← Go back
-        </button>
+        <InlineError>Photo not found — please go back and add it again.</InlineError>
+        <Button variant="text" onClick={() => router.back()}>← Go back</Button>
       </div>
     )
   }
 
+  // Caption picker phase
   if (phase === 'choosing' || phase === 'sending') {
     return (
       <div style={{ paddingTop: 24, paddingBottom: 48 }}>
@@ -213,120 +217,160 @@ function ConfirmContent() {
           <img
             src={photoPreviewUrl}
             alt="Photo preview"
-            style={{ width: '100%', borderRadius: 10, maxHeight: 180, objectFit: 'cover', marginBottom: 24 }}
+            style={{
+              width: '100%', borderRadius: 'var(--r-lg)',
+              maxHeight: 200, objectFit: 'cover', marginBottom: 'var(--space-6)',
+            }}
           />
         )}
-        <p style={{ fontSize: 16, fontFamily: 'var(--display)', marginBottom: 4, lineHeight: 1.3 }}>
+
+        <h1 style={{
+          fontSize: 'var(--text-xl)', fontFamily: 'var(--display)', fontWeight: 400,
+          color: 'var(--ink)', marginBottom: 'var(--space-2)', lineHeight: 'var(--leading-tight)',
+        }}>
           Pick your caption
-        </p>
-        <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 20, lineHeight: 1.5 }}>
+        </h1>
+        <p style={{
+          fontSize: 'var(--text-base)', color: 'var(--ink-faint)',
+          marginBottom: 'var(--space-5)', lineHeight: 'var(--leading-normal)',
+        }}>
           Choose the version that sounds most like you.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
           {captionOptions.map((option) => {
             const isSelected = selectedCaption === option.text
             return (
-              <button
+              <SelectableCard
                 key={option.style}
+                selected={isSelected}
                 onClick={() => setSelectedCaption(option.text)}
-                style={{
-                  textAlign: 'left', cursor: 'pointer',
-                  border: isSelected ? '2px solid var(--violet)' : '1.5px solid var(--line-soft)',
-                  borderRadius: 12, padding: '14px 16px',
-                  background: isSelected ? 'rgba(74,61,176,0.06)' : 'var(--surface)',
-                  transition: 'border-color 0.15s, background 0.15s',
-                }}
               >
-                <p style={{
-                  fontSize: 10, fontFamily: 'var(--mono)', textTransform: 'uppercase',
-                  color: isSelected ? 'var(--violet)' : 'var(--ink-faint)',
-                  marginBottom: 8, letterSpacing: '0.06em',
-                }}>
-                  {option.style}
-                </p>
-                <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.65, margin: 0 }}>
+                <SectionLabel marginBottom="var(--space-2)">{option.style}</SectionLabel>
+                <p style={{ fontSize: 'var(--text-base)', color: 'var(--ink)', lineHeight: 'var(--leading-relaxed)', margin: 0 }}>
                   {option.text}
                 </p>
-              </button>
+              </SelectableCard>
             )
           })}
         </div>
 
-        {error && (
-          <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>{error}</p>
-        )}
+        {error && <InlineError>{error}</InlineError>}
 
-        <button
-          onClick={handleSendToDirector}
-          disabled={!selectedCaption || phase === 'sending'}
-          style={{
-            width: '100%', minHeight: 'var(--touch)', borderRadius: 14,
-            background: 'var(--violet)', color: '#fff', border: 'none', fontSize: 15,
-            opacity: (!selectedCaption || phase === 'sending') ? 0.5 : 1,
-            cursor: (!selectedCaption || phase === 'sending') ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {phase === 'sending' ? 'Sending…' : 'Send to Director'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <Button
+            variant="cta"
+            fullWidth
+            onClick={handleSendForReview}
+            disabled={!selectedCaption || phase === 'sending'}
+          >
+            {phase === 'sending' ? 'Sending…' : 'Send for review'}
+          </Button>
+          <Button variant="text" onClick={handleTryAgain}>
+            ← Try again
+          </Button>
+        </div>
       </div>
     )
   }
 
-  return (
-    <div style={{ paddingTop: 24, paddingBottom: 32 }}>
-      {photoPreviewUrl && mode === 'photo' ? (
-        <>
-          <p style={{ fontSize: 18, fontFamily: 'var(--display)', marginBottom: 12, lineHeight: 1.3 }}>
-            Your edited photo
-          </p>
+  // Generating (loading) state
+  if (phase === 'generating') {
+    return (
+      <div style={{ paddingTop: 24, paddingBottom: 32 }}>
+        {photoPreviewUrl && (
           <img
             src={photoPreviewUrl}
             alt="Photo preview"
-            style={{ width: '100%', borderRadius: 10, maxHeight: 300, objectFit: 'cover', marginBottom: 28 }}
+            style={{
+              width: '100%', borderRadius: 'var(--r-lg)',
+              maxHeight: 200, objectFit: 'cover', marginBottom: 'var(--space-6)',
+            }}
+          />
+        )}
+        <div style={{
+          background: 'var(--surface)', borderRadius: 'var(--r-xl)',
+          border: '1px solid var(--line-soft)',
+          padding: 'var(--space-8)', textAlign: 'center',
+          marginTop: 'var(--space-4)',
+        }}>
+          <p className="pulse" style={{
+            fontSize: 'var(--text-md)', color: 'var(--ink)',
+            marginBottom: 'var(--space-2)', fontFamily: 'var(--display)',
+          }}>
+            Writing caption ideas…
+          </p>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-faint)' }}>
+            This takes a few seconds
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Idle phase — review content + CTA
+  return (
+    <div style={{ paddingTop: 24, paddingBottom: 32 }}>
+      <button
+        onClick={() => router.back()}
+        style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'var(--ink-faint)', fontSize: 'var(--text-sm)',
+          fontFamily: 'var(--mono)', letterSpacing: 'var(--tracking-wide)',
+          textTransform: 'uppercase', padding: 0,
+          marginBottom: 'var(--space-5)', display: 'block',
+        }}
+      >
+        ← Edit
+      </button>
+
+      {photoPreviewUrl && mode === 'photo' ? (
+        <>
+          <h2 style={{
+            fontSize: 'var(--text-md)', fontFamily: 'var(--display)', fontWeight: 400,
+            color: 'var(--ink)', marginBottom: 'var(--space-3)',
+          }}>
+            Your photo
+          </h2>
+          <img
+            src={photoPreviewUrl}
+            alt="Photo preview"
+            style={{
+              width: '100%', borderRadius: 'var(--r-lg)',
+              maxHeight: 300, objectFit: 'cover', marginBottom: 'var(--space-6)',
+            }}
           />
         </>
       ) : mode !== 'photo' ? (
         <>
-          <p style={{ fontSize: 18, fontFamily: 'var(--display)', marginBottom: 8, lineHeight: 1.3 }}>
-            Here&apos;s what you said
-          </p>
-          <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginBottom: 28 }}>
-            <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>
+          <h2 style={{
+            fontSize: 'var(--text-md)', fontFamily: 'var(--display)', fontWeight: 400,
+            color: 'var(--ink)', marginBottom: 'var(--space-3)',
+          }}>
+            {mode === 'voice' ? 'Here\'s what you said' : 'Here\'s what you wrote'}
+          </h2>
+          <div style={{
+            background: 'var(--surface)', borderRadius: 'var(--r-md)',
+            border: '1px solid var(--line-soft)',
+            padding: 'var(--space-4)', marginBottom: 'var(--space-6)',
+          }}>
+            <p style={{ fontSize: 'var(--text-base)', color: 'var(--ink)', lineHeight: 'var(--leading-relaxed)', margin: 0 }}>
               {inputSummary || (mode ? `${mode} input` : 'input')}
             </p>
           </div>
         </>
       ) : null}
 
-      {phase === 'generating' ? (
-        <div style={{ textAlign: 'center', padding: '32px 0' }}>
-          <p style={{ fontSize: 14, color: 'var(--ink-faint)', lineHeight: 1.5 }}>
-            Crafting 3 caption ideas…
-          </p>
-        </div>
-      ) : (
-        <>
-          <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 28, lineHeight: 1.5 }}>
-            AI will generate 3 caption options for you to choose from before sending to your Director.
-          </p>
-          {error && (
-            <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>{error}</p>
-          )}
-          <button
-            onClick={handleGenerateOptions}
-            disabled={!reviewerId || (mode === 'photo' && !photoBlob)}
-            style={{
-              width: '100%', minHeight: 'var(--touch)', borderRadius: 14,
-              background: 'var(--violet)', color: '#fff', border: 'none', fontSize: 15,
-              opacity: (!reviewerId || (mode === 'photo' && !photoBlob)) ? 0.6 : 1,
-              cursor: (!reviewerId || (mode === 'photo' && !photoBlob)) ? 'not-allowed' : 'pointer',
-            }}
-          >
-            Generate caption options
-          </button>
-        </>
-      )}
+      {error && <InlineError>{error}</InlineError>}
+
+      <Button
+        variant="cta"
+        fullWidth
+        onClick={handleGetCaptionIdeas}
+        disabled={!reviewerId || (mode === 'photo' && !photoBlob)}
+      >
+        Get caption ideas
+      </Button>
     </div>
   )
 }
