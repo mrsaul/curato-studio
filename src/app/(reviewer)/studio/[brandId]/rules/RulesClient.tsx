@@ -29,10 +29,12 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
   const [adding, setAdding] = useState(false)
   const [deleting, setDeleting] = useState<number | null>(null)
   const [newIndex, setNewIndex] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function addRule() {
     if (!text.trim()) return
     setAdding(true)
+    setError(null)
     try {
       const res = await fetch(`/api/studio/brands/${brandId}/rules`, {
         method: 'POST',
@@ -40,11 +42,12 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
         body: JSON.stringify({ verb, domain, text: text.trim() }),
       })
       const data = await res.json()
-      if (res.ok) {
-        setNewIndex(data.rules.length - 1)
-        setRules(data.rules)
-        setText('')
-      }
+      if (!res.ok) throw new Error(data.error ?? 'Could not add the rule')
+      setNewIndex(data.rules.length - 1)
+      setRules(data.rules)
+      setText('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
       setAdding(false)
     }
@@ -52,10 +55,14 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
 
   async function deleteRule(index: number) {
     setDeleting(index)
+    setError(null)
     try {
       const res = await fetch(`/api/studio/brands/${brandId}/rules/${index}`, { method: 'DELETE' })
       const data = await res.json()
-      if (res.ok) setRules(data.rules)
+      if (!res.ok) throw new Error(data.error ?? 'Could not delete the rule')
+      setRules(data.rules)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
       setDeleting(null)
     }
@@ -117,6 +124,11 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
           placeholder="write the rule…"
           style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: '#f7f7f7', fontSize: 12, color: 'var(--ink)', marginBottom: 8, boxSizing: 'border-box' }}
         />
+        {error && (
+          <p role="alert" style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8, lineHeight: 1.5 }}>
+            {error}
+          </p>
+        )}
         <button
           onClick={addRule}
           disabled={adding || !text.trim()}

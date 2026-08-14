@@ -8,8 +8,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: ctx } = await supabase.from('contexts').select('reviewer_id').eq('id', id).single()
-  if (!ctx || ctx.reviewer_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const { data: ctx } = await supabase.from('contexts').select('user_id').eq('id', id).single()
+  if (!ctx || ctx.user_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data: capsule, error: capsuleError } = await supabase
     .from('capsules').select('id, rules').eq('context_id', id)

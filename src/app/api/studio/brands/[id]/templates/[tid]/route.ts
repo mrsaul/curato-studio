@@ -7,9 +7,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: ctx, error: ctxError } = await supabase.from('contexts').select('reviewer_id').eq('id', id).single()
+  const { data: ctx, error: ctxError } = await supabase.from('contexts').select('user_id').eq('id', id).single()
   if (ctxError && ctxError.code !== 'PGRST116') return NextResponse.json({ error: 'Internal error' }, { status: 500 })
-  if (!ctx || ctx.reviewer_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!ctx || ctx.user_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   let body: { name?: string; description?: string; active?: boolean }
   try {
@@ -48,9 +48,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: ctx, error: ctxError } = await supabase.from('contexts').select('reviewer_id').eq('id', id).single()
+  const { data: ctx, error: ctxError } = await supabase.from('contexts').select('user_id').eq('id', id).single()
   if (ctxError && ctxError.code !== 'PGRST116') return NextResponse.json({ error: 'Internal error' }, { status: 500 })
-  if (!ctx || ctx.reviewer_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!ctx || ctx.user_id !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { error } = await supabase.from('templates').delete().eq('id', tid).eq('context_id', id)
   if (error) return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })

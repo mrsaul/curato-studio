@@ -4,9 +4,9 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 const TYPES = ['photo_post', 'quote_card', 'announcement', 'carousel'] as const
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, contextId: string, userId: string) {
-  const { data, error } = await supabase.from('contexts').select('reviewer_id').eq('id', contextId).single()
+  const { data, error } = await supabase.from('contexts').select('user_id').eq('id', contextId).single()
   if (error && error.code !== 'PGRST116') throw new Error(`DB error: ${error.message}`)
-  return data?.reviewer_id === userId
+  return data?.user_id === userId
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
