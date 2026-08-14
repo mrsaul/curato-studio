@@ -3,6 +3,14 @@ import { createServiceSupabaseClient } from '@/lib/supabase-server'
 import { InstagramAccount } from '@/types/instagram'
 import { needsRefresh, refreshLongLived, expiryFromNow } from '@/lib/instagram/tokens'
 
+/**
+ * Reading req.headers does not opt a Route Handler out of static
+ * evaluation, so without this the route is prerendered at build time and
+ * the weekly cron would hit a cached response instead of refreshing
+ * anything.
+ */
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   // Vercel cron sends this header; reject anything else so the endpoint
   // is not a public token-churn button.
