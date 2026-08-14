@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase-server'
 import { StatTile } from '@/components/ui'
 
 export default async function BrandDetailPage({ params }: { params: Promise<{ brandId: string }> }) {
@@ -13,7 +13,9 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
     .from('contexts').select('id, name, description, user_id').eq('id', brandId).single()
   if (!ctx || ctx.user_id !== user.id) redirect('/studio')
 
-  const [capsule, pending, templates, assets, members] = await Promise.all([
+  const service = createServiceSupabaseClient()
+
+  const [capsule, pending, templates, assets, members, instagram] = await Promise.all([
     supabase.from('capsules').select('rules').eq('context_id', brandId)
       .order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('judgments').select('id', { count: 'exact', head: true })
@@ -24,6 +26,7 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
       .eq('context_id', brandId),
     supabase.from('brand_members').select('id', { count: 'exact', head: true })
       .eq('context_id', brandId),
+    service.from('instagram_accounts').select('needs_reconnect').eq('context_id', brandId).maybeSingle(),
   ])
 
   const ruleCount = ((capsule.data?.rules ?? []) as unknown[]).length
@@ -31,12 +34,15 @@ export default async function BrandDetailPage({ params }: { params: Promise<{ br
   const templateCount = templates.count ?? 0
   const assetCount = assets.count ?? 0
   const memberCount = members.count ?? 0
+  const igConnected = !!instagram.data
+  const igNeedsReconnect = instagram.data?.needs_reconnect ?? false
 
   const tiles = [
     { label: 'Rules', sub: 'voice & style', count: ruleCount, href: `/studio/${brandId}/rules`, pending: false, wide: false },
     { label: 'Mind', sub: pendingMindCount > 0 ? 'need review' : 'up to date', count: pendingMindCount, href: `/studio/${brandId}/mind`, pending: pendingMindCount > 0, wide: false },
     { label: 'Templates', sub: 'post formats', count: templateCount, href: `/studio/${brandId}/templates`, pending: false, wide: false },
     { label: 'Assets', sub: 'images & files', count: assetCount, href: `/studio/${brandId}/assets`, pending: false, wide: false },
+    { label: 'Instagram', sub: igNeedsReconnect ? 'reconnect needed' : (igConnected ? 'connected' : 'not connected'), count: igConnected ? 1 : 0, href: `/studio/${brandId}/instagram`, pending: igNeedsReconnect, wide: false },
     { label: 'Creators', sub: memberCount === 0 ? 'none yet' : 'active', count: memberCount, href: `/studio/${brandId}/creators`, pending: false, wide: true },
   ]
 
