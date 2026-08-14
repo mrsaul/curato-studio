@@ -144,6 +144,9 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .compose-field:focus-visible { outline: none; }
 .compose-field::placeholder { color: var(--ink-faint); opacity: 1; }
 
+/* Compose mode owns the screen — the floating nav would sit on top of it. */
+body.composing [data-app-nav] { display: none; }
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }

@@ -51,9 +51,9 @@ export default function ReviewerBottomNav({ pendingCount = 0 }: { pendingCount?:
   ]
 
   return (
-    <nav style={{
+    <nav data-app-nav style={{
       position: 'fixed',
-      bottom: 20,
+      bottom: 'calc(20px + env(safe-area-inset-bottom))',
       left: '50%',
       transform: 'translateX(-50%)',
       background: 'var(--ink)',
@@ -63,6 +63,7 @@ export default function ReviewerBottomNav({ pendingCount = 0 }: { pendingCount?:
       gap: 2,
       boxShadow: '0 4px 28px rgba(26,23,20,0.28)',
       zIndex: 200,
+      maxWidth: 'calc(100vw - 32px)',
     }}>
       {tabs.map(tab => (
         <Link
@@ -72,15 +73,15 @@ export default function ReviewerBottomNav({ pendingCount = 0 }: { pendingCount?:
             display: 'flex',
             alignItems: 'center',
             gap: 7,
-            padding: '9px 20px',
+            padding: '9px clamp(12px, 4vw, 20px)',
             borderRadius: 100,
             background: tab.active ? 'rgba(255,255,255,0.13)' : 'transparent',
-            color: tab.active ? '#fff' : 'rgba(255,255,255,0.38)',
+            color: tab.active ? '#fff' : 'rgba(255,255,255,0.62)',
             textDecoration: 'none',
             fontSize: 11,
             fontFamily: 'var(--mono)',
             letterSpacing: '0.06em',
-            minHeight: 44,
+            minHeight: 48,
             transition: 'background 0.15s, color 0.15s',
             whiteSpace: 'nowrap',
           }}

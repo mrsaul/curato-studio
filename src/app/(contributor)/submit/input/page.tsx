@@ -14,6 +14,29 @@ const modeLabel: Record<InputMode, string> = {
   photo: 'Photo',
 }
 
+const ArrowLeftIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M19 12H5m0 0 6-6m-6 6 6 6" stroke="currentColor" strokeWidth="1.75"
+      strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+const MicIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="9" y="2" width="6" height="11.5" rx="3" stroke="currentColor" strokeWidth="1.75" />
+    <path d="M5 11a7 7 0 0 0 14 0M12 18.5V22" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+  </svg>
+)
+
+const ImageIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="4.5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.75" />
+    <circle cx="8.75" cy="10" r="1.4" fill="currentColor" />
+    <path d="m3.5 17 4.4-4.4a2 2 0 0 1 2.83 0L15 17m1.9-3.2 1.2-1.2a2 2 0 0 1 2.83 0l.57.57"
+      stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 function InputPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -124,20 +147,26 @@ function InputPageInner() {
   const ok = canContinue()
   const words = text.trim() ? text.trim().split(/\s+/).length : 0
 
-  // Compose mode owns the viewport — keep the page behind it from scrolling.
+  // Compose mode owns the viewport: lock the page behind it and hide the
+  // floating nav, which otherwise paints over the composer at z-index 200.
   useEffect(() => {
     if (mode !== 'text') return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    document.body.classList.add('composing')
+    return () => {
+      document.body.style.overflow = prev
+      document.body.classList.remove('composing')
+    }
   }, [mode])
 
-  const quietButton: React.CSSProperties = {
-    background: 'none', border: 'none', padding: '12px 0',
+  const chipButton: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+    background: 'var(--surface)', border: '1px solid var(--line-soft)',
+    borderRadius: 'var(--r-full)', padding: '0 16px',
     minHeight: 'var(--touch)', cursor: 'pointer',
     fontSize: 'var(--text-base)', fontFamily: 'var(--body)',
-    color: 'var(--violet)', textDecoration: 'underline',
-    textUnderlineOffset: 3,
+    color: 'var(--ink-soft)', whiteSpace: 'nowrap',
   }
 
   /* ─── Write: a full-screen note surface, nothing else on screen ─── */
@@ -152,7 +181,8 @@ function InputPageInner() {
         {/* Top bar — back, and a quiet word count */}
         <div style={{
           flexShrink: 0, display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', padding: '4px 12px 0 8px',
+          justifyContent: 'space-between',
+          padding: 'calc(4px + env(safe-area-inset-top)) clamp(12px, 4vw, 16px) 0 clamp(8px, 3vw, 12px)',
         }}>
           <button
             onClick={() => router.back()}
@@ -160,10 +190,11 @@ function InputPageInner() {
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               minWidth: 'var(--touch)', minHeight: 'var(--touch)',
-              color: 'var(--ink-soft)', fontSize: 20, lineHeight: 1,
+              color: 'var(--ink-soft)',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
-            ←
+            <ArrowLeftIcon />
           </button>
           <span aria-hidden="true" style={{
             fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)',
@@ -176,10 +207,10 @@ function InputPageInner() {
         {/* The page */}
         <div style={{
           flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column',
-          padding: '0 20px', overflowY: 'auto',
+          padding: '0 clamp(16px, 5vw, 24px)', overflowY: 'auto',
         }}>
           <h1 id="compose-title" style={{
-            fontSize: 'var(--text-compose-title)', fontWeight: 400,
+            fontSize: 'clamp(26px, 7.5vw, 32px)', fontWeight: 400,
             fontFamily: 'var(--display)', color: 'var(--ink)',
             lineHeight: 'var(--leading-tight)', letterSpacing: '-0.02em',
             margin: '4px 0 var(--space-4)', flexShrink: 0,
@@ -198,7 +229,7 @@ function InputPageInner() {
               flex: 1, width: '100%', minHeight: 180,
               border: 'none', background: 'transparent', padding: 0,
               color: 'var(--ink)',
-              fontSize: 'var(--text-compose)',
+              fontSize: 'clamp(21px, 6vw, 26px)',
               fontFamily: 'var(--body)',
               lineHeight: 1.45, letterSpacing: '-0.01em',
               resize: 'none', boxSizing: 'border-box',
@@ -208,7 +239,7 @@ function InputPageInner() {
 
         {/* Bottom — stays empty until there's something to do */}
         <div style={{
-          flexShrink: 0, padding: '8px 20px',
+          flexShrink: 0, padding: '8px clamp(16px, 5vw, 24px)',
           paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
         }}>
           {error && (
@@ -219,13 +250,14 @@ function InputPageInner() {
 
           {words === 0 ? (
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 'var(--space-5)',
+              display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+              flexWrap: 'wrap',
             }}>
-              <button style={quietButton} onClick={() => { setMode('voice'); setError(null) }}>
-                Record a voice note
+              <button style={chipButton} onClick={() => { setMode('voice'); setError(null) }}>
+                <MicIcon /> Voice note
               </button>
-              <button style={quietButton} onClick={() => { setMode('photo'); setError(null) }}>
-                Add a photo
+              <button style={chipButton} onClick={() => { setMode('photo'); setError(null) }}>
+                <ImageIcon /> Photo
               </button>
             </div>
           ) : (
@@ -249,7 +281,7 @@ function InputPageInner() {
           color: 'var(--violet)', display: 'flex', alignItems: 'center', gap: 6,
         }}
       >
-        <span aria-hidden="true">←</span> Back to writing
+        <ArrowLeftIcon /> Back to writing
       </button>
 
       <h1 style={{
