@@ -10,6 +10,16 @@ export default async function RequestsPage() {
 
   const requests = await getContributorRequests(supabase, user.id)
 
+  const { data: attempts } = await supabase
+    .from('publish_attempts')
+    .select('request_id, format, permalink')
+    .eq('status', 'published')
+
+  const publishedByRequest: Record<string, { format: 'feed' | 'story'; permalink: string | null }[]> = {}
+  for (const a of attempts ?? []) {
+    ;(publishedByRequest[a.request_id] ??= []).push({ format: a.format, permalink: a.permalink })
+  }
+
   return (
     <div style={{ paddingTop: 28, paddingBottom: 32 }}>
       <p style={{
@@ -36,7 +46,7 @@ export default async function RequestsPage() {
           </p>
         </div>
       ) : (
-        <RequestsClient requests={requests} />
+        <RequestsClient requests={requests} publishedByRequest={publishedByRequest} />
       )}
     </div>
   )

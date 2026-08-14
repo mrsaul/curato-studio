@@ -5,6 +5,7 @@ import { CreativeRequest } from '@/types/request'
 import RequestReplyForm from './RequestReplyForm'
 import DraftRetryButton from './DraftRetryButton'
 import CaptionShare from './CaptionShare'
+import PublishButton from './PublishButton'
 
 import { BUCKETS, STATUS_META, STEPS, SOURCE_LABEL, Bucket, timeAgo } from './status'
 
@@ -55,7 +56,12 @@ function Track({ step }: { step: number }) {
   )
 }
 
-function RequestCard({ request }: { request: CreativeRequest }) {
+function RequestCard({
+  request, published = [],
+}: {
+  request: CreativeRequest
+  published?: { format: 'feed' | 'story'; permalink: string | null }[]
+}) {
   const meta = STATUS_META[request.status]
   const input = request.transcript ?? request.raw_text ?? ''
   const preview = input ? (input.length > 130 ? input.slice(0, 130) + '…' : input) : null
@@ -132,11 +138,23 @@ function RequestCard({ request }: { request: CreativeRequest }) {
       )}
       {request.status === 'draft_ready' && <DraftRetryButton requestId={request.id} />}
       {isReady && <CaptionShare requestId={request.id} />}
+      {isReady && (
+        <PublishButton
+          requestId={request.id}
+          hasImage={Boolean(request.photo_url)}
+          alreadyPublished={published}
+        />
+      )}
     </article>
   )
 }
 
-export default function RequestsClient({ requests }: { requests: CreativeRequest[] }) {
+export default function RequestsClient({
+  requests, publishedByRequest = {},
+}: {
+  requests: CreativeRequest[]
+  publishedByRequest?: Record<string, { format: 'feed' | 'story'; permalink: string | null }[]>
+}) {
   const counts = BUCKETS.reduce((acc, b) => {
     acc[b.key] = requests.filter(r => STATUS_META[r.status].bucket === b.key).length
     return acc
@@ -213,7 +231,9 @@ export default function RequestsClient({ requests }: { requests: CreativeRequest
           {activeMeta.empty}
         </p>
       ) : (
-        shown.map(r => <RequestCard key={r.id} request={r} />)
+        shown.map(r => (
+          <RequestCard key={r.id} request={r} published={publishedByRequest[r.id] ?? []} />
+        ))
       )}
     </div>
   )
