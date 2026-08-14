@@ -3,6 +3,14 @@
 import { useState } from 'react'
 import { Rule } from '@/types/brand'
 
+const RULE_ADDED_STYLE = `
+@keyframes ruleHighlight {
+  0%   { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31,122,80,0.15); }
+  60%  { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31,122,80,0.08); }
+  100% { border-color: var(--line-soft); box-shadow: none; }
+}
+`
+
 const VERBS = ['always', 'never', 'prefer', 'avoid'] as const
 const DOMAINS = ['voice', 'visual', 'content', 'format', 'timing'] as const
 
@@ -20,6 +28,7 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
   const [text, setText] = useState('')
   const [adding, setAdding] = useState(false)
   const [deleting, setDeleting] = useState<number | null>(null)
+  const [newIndex, setNewIndex] = useState<number | null>(null)
 
   async function addRule() {
     if (!text.trim()) return
@@ -31,7 +40,11 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
         body: JSON.stringify({ verb, domain, text: text.trim() }),
       })
       const data = await res.json()
-      if (res.ok) { setRules(data.rules); setText('') }
+      if (res.ok) {
+        setNewIndex(data.rules.length - 1)
+        setRules(data.rules)
+        setText('')
+      }
     } finally {
       setAdding(false)
     }
@@ -52,14 +65,27 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
 
   return (
     <div>
+      <style>{RULE_ADDED_STYLE}</style>
       {rules.length === 0 && (
         <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 16 }}>No rules yet. Add the first one below.</p>
       )}
 
       {rules.map((rule, i) => {
         const colors = VERB_COLORS[rule.verb] ?? { bg: 'var(--surface)', color: 'var(--ink)' }
+        const isNew = i === newIndex
         return (
-          <div key={i} style={{ background: 'var(--surface)', borderRadius: 12, padding: 12, marginBottom: 8, border: '1px solid var(--line-soft)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div
+            key={i}
+            onAnimationEnd={isNew ? (e) => { if (e.animationName === 'ruleHighlight') setNewIndex(null) } : undefined}
+            style={{
+              background: 'var(--surface)', borderRadius: 12, padding: 12, marginBottom: 8,
+              border: '1px solid var(--line-soft)', display: 'flex',
+              justifyContent: 'space-between', alignItems: 'flex-start',
+              ...(isNew ? {
+                animation: 'fadeUp 0.25s var(--ease-decel) both, ruleHighlight 1.4s ease forwards',
+              } : {}),
+            }}
+          >
             <div style={{ flex: 1 }}>
               <span style={{ fontSize: 10, fontFamily: 'var(--mono)', background: colors.bg, color: colors.color, borderRadius: 4, padding: '2px 6px', marginRight: 8 }}>
                 {rule.verb}
