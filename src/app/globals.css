@@ -1,31 +1,47 @@
 :root {
   /* ─── Surface ─── */
-  --bg:        #F5EFE3;
-  --surface:   #EDE6D8;
-  --panel:     #E5DECF;
+  --bg:        #F7EBD5;
+  --surface:   #F1E3C9;
+  --panel:     #EBDBBD;
+
+  /* Writing surfaces — inputs, textareas, prompts. Near-white, warm cast. */
+  --field:       #FFFDF7;
+  --field-line:  #E0CFAC;
 
   /* ─── Ink ─── */
-  --ink:        #1A1714;
-  --ink-soft:   #5E5448;
-  --ink-faint:  #6B6158;  /* darkened from #9B9284 — was 2.5:1, now 4.8:1 WCAG AA */
+  --ink:        #141210;   /* 15.8:1 on --bg — matches the illustration's outline */
+  --ink-soft:   #5C5040;   /* 6.8:1 on --bg */
+  --ink-faint:  #6B6158;   /* 5.1:1 on --bg, 4.8:1 on --surface */
   --ink-on-dark: #FFFFFF;
 
   /* ─── Line ─── */
-  --line:      #CBBFAA;
-  --line-soft: #D9D2C2;
+  --line:      #C9B896;
+  --line-soft: #DDCFB4;
+  --line-bold: #141210;   /* the reference's heavy outline, for fills that want it */
 
-  /* ─── Accent ─── */
-  --violet:        #4A3DB0;
-  --violet-soft:   rgba(74, 61, 176, 0.10);
-  --violet-subtle: rgba(74, 61, 176, 0.06);
-  --green:         #1F7A50;
-  --green-soft:    rgba(31, 122, 80, 0.12);
-  --red:           #9E3442;
-  --red-soft:      rgba(158, 52, 66, 0.10);
-  --amber:         #C27A1A;   /* decorative tint source only — do not use as text */
-  --amber-surface: #FFF8E7;
-  --amber-border:  #EDD668;
-  --amber-text:    #7A5208;   /* 6.2:1 on --amber-surface */
+  /* ─── Accent ───
+     Pastels are FILLS, not text. Each pairs with --ink on top (7:1+).
+     The -text variant is the darkened hue for when it must be type on --bg. */
+  --lilac:         #E4B5F0;   /* fill — ink on it: 10.8:1 */
+  --lilac-soft:    rgba(228, 181, 240, 0.30);
+  --violet:        #7B2CA8;   /* text — 6.4:1 on --bg */
+  --violet-soft:   rgba(123, 44, 168, 0.10);
+  --violet-subtle: rgba(123, 44, 168, 0.06);
+
+  --leaf:          #4CB380;   /* fill — ink on it: 7.2:1 */
+  --leaf-soft:     rgba(76, 179, 128, 0.24);
+  --green:         #1B6B46;   /* text — 5.5:1 on --bg */
+  --green-soft:    rgba(27, 107, 70, 0.12);
+
+  --gold:          #F0B429;   /* fill — ink on it: 10.0:1 */
+  --gold-soft:     rgba(240, 180, 41, 0.26);
+  --amber:         #8A5A0B;   /* text — 5.0:1 on --bg. Safe as type now. */
+  --amber-surface: #FDF0CE;
+  --amber-border:  #E8C87A;
+  --amber-text:    #8A5A0B;
+
+  --red:           #B03A2E;   /* text — 5.1:1 on --bg; white on it 6.0:1 */
+  --red-soft:      rgba(176, 58, 46, 0.10);
 
   /* ─── Typography ─── */
   --display: 'ABCArizonaFlare', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -105,7 +121,19 @@ body {
 }
 
 button { cursor: pointer; }
-input, textarea { font-family: inherit; }
+
+/* Writing surfaces read near-white against the cream page. */
+input, textarea {
+  font-family: inherit;
+  background: var(--field);
+  color: var(--ink);
+}
+input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 1px;
+}
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }

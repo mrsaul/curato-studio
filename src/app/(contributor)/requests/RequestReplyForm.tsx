@@ -65,9 +65,9 @@ export default function RequestReplyForm({
         rows={3}
         style={{
           width: '100%', padding: '10px 12px', borderRadius: 8,
-          border: '1.5px solid var(--line-soft)', background: 'var(--bg)',
+          border: '1.5px solid var(--field-line)', background: 'var(--field)',
           color: 'var(--ink)', fontSize: 14, resize: 'none',
-          fontFamily: 'var(--body)', lineHeight: 1.5, outline: 'none',
+          fontFamily: 'var(--body)', lineHeight: 1.5,
           boxSizing: 'border-box',
         }}
       />

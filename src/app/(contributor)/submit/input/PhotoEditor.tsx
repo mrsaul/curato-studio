@@ -352,7 +352,7 @@ const PhotoEditor = forwardRef<PhotoEditorHandle, PhotoEditorProps>(function Pho
                 width: '100%', padding: '11px 14px', borderRadius: 10,
                 border: '1.5px solid var(--line-soft)',
                 background: 'var(--bg)', color: 'var(--ink)', fontSize: 15,
-                fontFamily: 'var(--body)', outline: 'none',
+                fontFamily: 'var(--body)',
               }}
             />
             <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 8 }}>
@@ -400,7 +400,7 @@ function FilterChip({
       style={{
         borderRadius: '50%',
         border: active ? '2.5px solid var(--violet)' : '2.5px solid transparent',
-        outline: active ? '1.5px solid rgba(74,61,176,0.25)' : 'none',
+        outline: active ? '1.5px solid var(--violet-soft)' : 'none',
         display: 'block',
       }}
     />

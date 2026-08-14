@@ -112,7 +112,7 @@ export default function CreatorsClient({ brandId, initialMembers, initialToken: 
       </p>
       <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 14, border: '1px solid var(--line-soft)' }}>
         <div style={{
-          background: 'rgba(74,61,176,0.06)', borderRadius: 8, padding: '8px 10px',
+          background: 'var(--violet-subtle)', borderRadius: 8, padding: '8px 10px',
           fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--violet)',
           marginBottom: 10, wordBreak: 'break-all',
         }}>

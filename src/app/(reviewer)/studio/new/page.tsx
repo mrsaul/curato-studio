@@ -47,7 +47,7 @@ export default function NewBrandPage() {
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. Cafeto"
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line-soft)', background: 'var(--surface)', fontSize: 14, color: 'var(--ink)', boxSizing: 'border-box' as const }}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--field-line)', background: 'var(--field)', fontSize: 14, color: 'var(--ink)', boxSizing: 'border-box' as const }}
           />
         </div>
 
@@ -60,7 +60,7 @@ export default function NewBrandPage() {
             onChange={e => setDescription(e.target.value)}
             placeholder="Coffee delivery · Medellín"
             rows={3}
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line-soft)', background: 'var(--surface)', fontSize: 14, color: 'var(--ink)', resize: 'vertical', boxSizing: 'border-box' as const }}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--field-line)', background: 'var(--field)', fontSize: 14, color: 'var(--ink)', resize: 'vertical', boxSizing: 'border-box' as const }}
           />
         </div>
 

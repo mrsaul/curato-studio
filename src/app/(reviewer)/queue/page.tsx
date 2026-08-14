@@ -54,7 +54,7 @@ function QueueCard({ request, index }: { request: CreativeRequest; index: number
           <span style={{
             fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.1em',
             color: 'var(--violet)', textTransform: 'uppercase',
-            background: 'rgba(74,61,176,0.1)', borderRadius: 4, padding: '2px 7px',
+            background: 'var(--violet-soft)', borderRadius: 4, padding: '2px 7px',
           }}>
             {SOURCE_LABEL[request.source_type] ?? request.source_type}
           </span>

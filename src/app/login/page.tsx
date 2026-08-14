@@ -75,9 +75,9 @@ export default function LoginPage() {
               required
               style={{
                 width: '100%', padding: '13px 14px', borderRadius: 10,
-                border: '1.5px solid var(--line-soft)', background: 'var(--surface)',
+                border: '1.5px solid var(--field-line)', background: 'var(--field)',
                 color: 'var(--ink)', fontSize: 14, marginBottom: 10,
-                fontFamily: 'var(--mono)', outline: 'none',
+                fontFamily: 'var(--mono)',
               }}
             />
             <button

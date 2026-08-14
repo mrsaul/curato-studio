@@ -56,12 +56,12 @@ export default function AssetsClient({ brandId, initialAssets }: { brandId: stri
         ))}
 
         <div
-          style={{ ...cellStyle, background: uploading ? '#e8e4ff' : 'rgba(74,61,176,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: uploading ? 'wait' : 'pointer' }}
+          style={{ ...cellStyle, background: uploading ? 'var(--lilac)' : 'var(--lilac-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: uploading ? 'wait' : 'pointer' }}
           onClick={() => !uploading && fileRef.current?.click()}
         >
           {uploading
-            ? <span style={{ fontSize: 10, color: '#4A3DB0', fontFamily: 'var(--mono)' }}>…</span>
-            : <span style={{ fontSize: 22, color: '#4A3DB0' }}>+</span>
+            ? <span style={{ fontSize: 10, color: 'var(--ink)', fontFamily: 'var(--mono)' }}>…</span>
+            : <span style={{ fontSize: 22, color: 'var(--ink)' }}>+</span>
           }
         </div>
       </div>

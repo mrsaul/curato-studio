@@ -9,13 +9,12 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
   borderRadius: 10,
-  border: '1.5px solid var(--line-soft)',
-  background: 'var(--surface)',
+  border: '1.5px solid var(--field-line)',
+  background: 'var(--field)',
   color: 'var(--ink)',
   fontSize: 14,
   fontFamily: 'var(--body)',
   lineHeight: 1.6,
-  outline: 'none',
   boxSizing: 'border-box',
   resize: 'none',
 }
@@ -116,8 +115,8 @@ export default function CaptionPicker({
           disabled={disabled}
           style={{
             flex: 1, padding: '11px 14px', borderRadius: 10,
-            border: '1.5px solid var(--line-soft)', background: 'var(--surface)',
-            color: 'var(--ink)', fontSize: 14, fontFamily: 'var(--body)', outline: 'none',
+            border: '1.5px solid var(--field-line)', background: 'var(--field)',
+            color: 'var(--ink)', fontSize: 14, fontFamily: 'var(--body)',
             opacity: disabled ? 0.7 : 1,
           }}
         />

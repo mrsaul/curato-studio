@@ -5,8 +5,8 @@ import { Rule } from '@/types/brand'
 
 const RULE_ADDED_STYLE = `
 @keyframes ruleHighlight {
-  0%   { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31,122,80,0.15); }
-  60%  { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31,122,80,0.08); }
+  0%   { border-color: var(--leaf); box-shadow: 0 0 0 3px var(--leaf-soft); }
+  60%  { border-color: var(--leaf); box-shadow: 0 0 0 3px var(--leaf-soft); }
   100% { border-color: var(--line-soft); box-shadow: none; }
 }
 `
@@ -14,11 +14,12 @@ const RULE_ADDED_STYLE = `
 const VERBS = ['always', 'never', 'prefer', 'avoid'] as const
 const DOMAINS = ['voice', 'visual', 'content', 'format', 'timing'] as const
 
+/* Pastel fill + ink text, per the reference's flat-fill / black-outline logic. */
 const VERB_COLORS: Record<string, { bg: string; color: string }> = {
-  always: { bg: '#e8e4ff', color: '#4A3DB0' },
-  never:  { bg: '#ffe4e4', color: '#c0392b' },
-  prefer: { bg: '#e4f0e4', color: '#27ae60' },
-  avoid:  { bg: '#fffbe6', color: '#b8920a' },
+  always: { bg: 'var(--lilac)', color: 'var(--ink)' },
+  never:  { bg: 'var(--red-soft)', color: 'var(--red)' },
+  prefer: { bg: 'var(--leaf)', color: 'var(--ink)' },
+  avoid:  { bg: 'var(--gold)', color: 'var(--ink)' },
 }
 
 export default function RulesClient({ brandId, initialRules }: { brandId: string; initialRules: Rule[] }) {
@@ -68,7 +69,7 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
     }
   }
 
-  const selectStyle: React.CSSProperties = { padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: '#f5f4ff', color: 'var(--violet)', fontSize: 12, fontFamily: 'var(--mono)', cursor: 'pointer' }
+  const selectStyle: React.CSSProperties = { padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: 'var(--field)', color: 'var(--violet)', fontSize: 12, fontFamily: 'var(--mono)', cursor: 'pointer' }
 
   return (
     <div>
@@ -107,7 +108,7 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
         )
       })}
 
-      <div style={{ border: '1.5px dashed rgba(74,61,176,0.3)', borderRadius: 12, padding: 12, marginTop: 12 }}>
+      <div style={{ border: '1.5px dashed var(--violet-soft)', borderRadius: 12, padding: 12, marginTop: 12 }}>
         <p style={{ fontSize: 10, color: 'var(--violet)', fontFamily: 'var(--mono)', marginBottom: 8 }}>+ Add rule</p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <select value={verb} onChange={e => setVerb(e.target.value as Rule['verb'])} style={selectStyle}>
@@ -122,7 +123,7 @@ export default function RulesClient({ brandId, initialRules }: { brandId: string
           onChange={e => setText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addRule()}
           placeholder="write the rule…"
-          style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: '#f7f7f7', fontSize: 12, color: 'var(--ink)', marginBottom: 8, boxSizing: 'border-box' }}
+          style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: 'var(--field)', fontSize: 12, color: 'var(--ink)', marginBottom: 8, boxSizing: 'border-box' }}
         />
         {error && (
           <p role="alert" style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8, lineHeight: 1.5 }}>

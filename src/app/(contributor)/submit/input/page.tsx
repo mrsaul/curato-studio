@@ -164,9 +164,9 @@ function InputPageInner() {
           rows={6}
           style={{
             width: '100%', padding: 'var(--space-4)', borderRadius: 'var(--r-md)',
-            border: '1.5px solid var(--line-soft)', background: 'var(--surface)',
+            border: '1.5px solid var(--field-line)', background: 'var(--field)',
             color: 'var(--ink)', fontSize: 'var(--text-md)', resize: 'none',
-            fontFamily: 'var(--body)', lineHeight: 'var(--leading-normal)', outline: 'none',
+            fontFamily: 'var(--body)', lineHeight: 'var(--leading-normal)',
             boxSizing: 'border-box',
           }}
         />

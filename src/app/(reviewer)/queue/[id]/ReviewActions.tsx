@@ -55,9 +55,9 @@ export default function ReviewActions({
         rows={5}
         style={{
           width: '100%', padding: '12px 14px', borderRadius: 10,
-          border: '1.5px solid var(--line-soft)', background: 'var(--surface)',
+          border: '1.5px solid var(--field-line)', background: 'var(--field)',
           color: 'var(--ink)', fontSize: 14, resize: 'none', fontFamily: 'var(--body)',
-          lineHeight: 1.5, outline: 'none', marginBottom: 10,
+          lineHeight: 1.5, marginBottom: 10,
           boxSizing: 'border-box',
         }}
       />
@@ -68,9 +68,9 @@ export default function ReviewActions({
         rows={2}
         style={{
           width: '100%', padding: '12px 14px', borderRadius: 10,
-          border: '1.5px solid var(--line-soft)', background: 'var(--surface)',
+          border: '1.5px solid var(--field-line)', background: 'var(--field)',
           color: 'var(--ink)', fontSize: 14, resize: 'none', fontFamily: 'var(--body)',
-          lineHeight: 1.5, outline: 'none', marginBottom: 16,
+          lineHeight: 1.5, marginBottom: 16,
           boxSizing: 'border-box',
         }}
       />

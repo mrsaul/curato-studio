@@ -67,7 +67,7 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
     }
   }
 
-  const selectStyle: React.CSSProperties = { padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: '#f5f4ff', color: 'var(--violet)', fontSize: 12, fontFamily: 'var(--mono)', cursor: 'pointer' }
+  const selectStyle: React.CSSProperties = { padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: 'var(--field)', color: 'var(--violet)', fontSize: 12, fontFamily: 'var(--mono)', cursor: 'pointer' }
 
   return (
     <div>
@@ -80,7 +80,7 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: t.description ? 3 : 0 }}>
               <p style={{ fontSize: 13, color: 'var(--ink)', margin: 0 }}>{t.name}</p>
-              <span style={{ fontSize: 9, fontFamily: 'var(--mono)', background: '#e8e4ff', color: '#4A3DB0', borderRadius: 4, padding: '2px 6px' }}>
+              <span style={{ fontSize: 9, fontFamily: 'var(--mono)', background: 'var(--lilac)', color: 'var(--ink)', borderRadius: 4, padding: '2px 6px' }}>
                 {TYPE_LABELS[t.type] ?? t.type}
               </span>
             </div>
@@ -92,7 +92,7 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
               disabled={toggling.has(t.id)}
               style={{
                 fontSize: 10, fontFamily: 'var(--mono)', borderRadius: 4, padding: '2px 8px', border: 'none', cursor: 'pointer',
-                background: t.active ? '#e8e4ff' : '#f0f0f0', color: t.active ? '#4A3DB0' : 'var(--ink-faint)',
+                background: t.active ? 'var(--lilac)' : 'var(--panel)', color: t.active ? 'var(--ink)' : 'var(--ink-faint)',
               }}
             >
               {t.active ? 'active' : 'inactive'}
@@ -109,13 +109,13 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
       ))}
 
       {showForm ? (
-        <div style={{ border: '1.5px dashed rgba(74,61,176,0.3)', borderRadius: 12, padding: 12, marginTop: 8 }}>
+        <div style={{ border: '1.5px dashed var(--violet-soft)', borderRadius: 12, padding: 12, marginTop: 8 }}>
           <p style={{ fontSize: 10, color: 'var(--violet)', fontFamily: 'var(--mono)', marginBottom: 8 }}>New template</p>
           <input
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Name…"
-            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: '#f7f7f7', fontSize: 12, color: 'var(--ink)', marginBottom: 8, boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: 'var(--field)', fontSize: 12, color: 'var(--ink)', marginBottom: 8, boxSizing: 'border-box' }}
           />
           <select value={type} onChange={e => setType(e.target.value as AtelierTemplate['type'])} style={{ ...selectStyle, marginBottom: 8, width: '100%' }}>
             {TYPES.map(tp => <option key={tp} value={tp}>{TYPE_LABELS[tp]}</option>)}
@@ -125,7 +125,7 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
             onChange={e => setDescription(e.target.value)}
             placeholder="Description (optional)…"
             rows={2}
-            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: '#f7f7f7', fontSize: 12, color: 'var(--ink)', marginBottom: 8, boxSizing: 'border-box', resize: 'vertical' }}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line-soft)', background: 'var(--field)', fontSize: 12, color: 'var(--ink)', marginBottom: 8, boxSizing: 'border-box', resize: 'vertical' }}
           />
           <div style={{ display: 'flex', gap: 8 }}>
             <button
@@ -146,7 +146,7 @@ export default function TemplatesClient({ brandId, initialTemplates }: { brandId
       ) : (
         <div
           onClick={() => setShowForm(true)}
-          style={{ border: '1.5px dashed rgba(74,61,176,0.3)', borderRadius: 12, padding: 12, textAlign: 'center', color: 'var(--violet)', fontSize: 12, cursor: 'pointer', marginTop: 8 }}
+          style={{ border: '1.5px dashed var(--violet-soft)', borderRadius: 12, padding: 12, textAlign: 'center', color: 'var(--violet)', fontSize: 12, cursor: 'pointer', marginTop: 8 }}
         >
           + New template
         </div>
