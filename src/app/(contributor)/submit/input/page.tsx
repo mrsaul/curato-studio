@@ -122,55 +122,143 @@ function InputPageInner() {
   }, [mode, text, transcript, router, brandId, reviewerId])
 
   const ok = canContinue()
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0
 
-  const tabStyle = (active: boolean): React.CSSProperties => ({
-    flex: 1, padding: '10px 4px', fontSize: 'var(--text-sm)',
-    fontFamily: 'var(--mono)', letterSpacing: 'var(--tracking-wide)',
-    textTransform: 'uppercase',
-    background: active ? 'var(--violet)' : 'var(--surface)',
-    color: active ? 'var(--ink-on-dark)' : 'var(--ink-soft)',
-    border: 'none', cursor: 'pointer', minHeight: 'var(--touch)',
-    transition: 'background var(--duration-base), color var(--duration-base)',
-  })
+  // Compose mode owns the viewport — keep the page behind it from scrolling.
+  useEffect(() => {
+    if (mode !== 'text') return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [mode])
+
+  const quietButton: React.CSSProperties = {
+    background: 'none', border: 'none', padding: '12px 0',
+    minHeight: 'var(--touch)', cursor: 'pointer',
+    fontSize: 'var(--text-base)', fontFamily: 'var(--body)',
+    color: 'var(--violet)', textDecoration: 'underline',
+    textUnderlineOffset: 3,
+  }
+
+  /* ─── Write: a full-screen note surface, nothing else on screen ─── */
+  if (mode === 'text') {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 60,
+        background: 'var(--field)',
+        maxWidth: 430, margin: '0 auto',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Top bar — back, and a quiet word count */}
+        <div style={{
+          flexShrink: 0, display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', padding: '4px 12px 0 8px',
+        }}>
+          <button
+            onClick={() => router.back()}
+            aria-label="Go back"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              minWidth: 'var(--touch)', minHeight: 'var(--touch)',
+              color: 'var(--ink-soft)', fontSize: 20, lineHeight: 1,
+            }}
+          >
+            ←
+          </button>
+          <span aria-hidden="true" style={{
+            fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)',
+            color: 'var(--ink-faint)',
+          }}>
+            {words > 0 ? `${words} ${words === 1 ? 'word' : 'words'}` : ''}
+          </span>
+        </div>
+
+        {/* The page */}
+        <div style={{
+          flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column',
+          padding: '0 20px', overflowY: 'auto',
+        }}>
+          <h1 id="compose-title" style={{
+            fontSize: 'var(--text-compose-title)', fontWeight: 400,
+            fontFamily: 'var(--display)', color: 'var(--ink)',
+            lineHeight: 'var(--leading-tight)', letterSpacing: '-0.02em',
+            margin: '4px 0 var(--space-4)', flexShrink: 0,
+          }}>
+            What&apos;s the idea?
+          </h1>
+
+          <textarea
+            className="compose-field"
+            autoFocus
+            aria-labelledby="compose-title"
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Start typing…"
+            style={{
+              flex: 1, width: '100%', minHeight: 180,
+              border: 'none', background: 'transparent', padding: 0,
+              color: 'var(--ink)',
+              fontSize: 'var(--text-compose)',
+              fontFamily: 'var(--body)',
+              lineHeight: 1.45, letterSpacing: '-0.01em',
+              resize: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {/* Bottom — stays empty until there's something to do */}
+        <div style={{
+          flexShrink: 0, padding: '8px 20px',
+          paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+        }}>
+          {error && (
+            <div style={{ marginBottom: 'var(--space-3)' }}>
+              <InlineError>{error}</InlineError>
+            </div>
+          )}
+
+          {words === 0 ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 'var(--space-5)',
+            }}>
+              <button style={quietButton} onClick={() => { setMode('voice'); setError(null) }}>
+                Record a voice note
+              </button>
+              <button style={quietButton} onClick={() => { setMode('photo'); setError(null) }}>
+                Add a photo
+              </button>
+            </div>
+          ) : (
+            <Button variant="primary" fullWidth onClick={handleContinue}>
+              Continue
+            </Button>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ paddingTop: 24, paddingBottom: 32 }}>
+      <button
+        onClick={() => { setMode('text'); setError(null) }}
+        style={{
+          background: 'none', border: 'none', padding: '0 0 var(--space-4)',
+          minHeight: 'var(--touch)', cursor: 'pointer',
+          fontSize: 'var(--text-base)', fontFamily: 'var(--body)',
+          color: 'var(--violet)', display: 'flex', alignItems: 'center', gap: 6,
+        }}
+      >
+        <span aria-hidden="true">←</span> Back to writing
+      </button>
+
       <h1 style={{
         fontSize: 'var(--text-2xl)', fontWeight: 400,
         fontFamily: 'var(--display)', color: 'var(--ink)',
-        marginBottom: 'var(--space-5)', lineHeight: 'var(--leading-tight)',
+        marginBottom: 'var(--space-6)', lineHeight: 'var(--leading-tight)',
       }}>
-        What&apos;s the idea?
+        {modeLabel[mode]}
       </h1>
-
-      {/* Mode switcher */}
-      <div style={{
-        display: 'flex', borderRadius: 'var(--r-md)', overflow: 'hidden',
-        marginBottom: 'var(--space-6)', border: '1.5px solid var(--line-soft)',
-      }}>
-        {(['text', 'voice', 'photo'] as InputMode[]).map(m => (
-          <button key={m} onClick={() => { setMode(m); setError(null) }} style={tabStyle(mode === m)}>
-            {modeLabel[m]}
-          </button>
-        ))}
-      </div>
-
-      {/* Write */}
-      {mode === 'text' && (
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Write what you'd like to share…"
-          rows={6}
-          style={{
-            width: '100%', padding: 'var(--space-4)', borderRadius: 'var(--r-md)',
-            border: '1.5px solid var(--field-line)', background: 'var(--field)',
-            color: 'var(--ink)', fontSize: 'var(--text-md)', resize: 'none',
-            fontFamily: 'var(--body)', lineHeight: 'var(--leading-normal)',
-            boxSizing: 'border-box',
-          }}
-        />
-      )}
 
       {/* Voice note */}
       {mode === 'voice' && (
@@ -185,6 +273,7 @@ function InputPageInner() {
                 onPointerDown={startRecording}
                 onPointerUp={stopRecording}
                 onPointerLeave={stopRecording}
+                aria-label={recordingState === 'recording' ? 'Release to stop recording' : 'Hold to record a voice note'}
                 style={{
                   width: 80, height: 80, borderRadius: '50%',
                   background: recordingState === 'recording' ? 'var(--red)' : 'var(--violet)',

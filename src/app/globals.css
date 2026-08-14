@@ -58,6 +58,10 @@
   --text-2xl:  26px;
   --text-3xl:  28px;
 
+  /* Compose mode — the writing surface is the whole screen, so type runs large. */
+  --text-compose:       25px;
+  --text-compose-title: 30px;
+
   /* Letter spacing */
   --tracking-wide:   0.06em;
   --tracking-wider:  0.08em;
@@ -134,6 +138,11 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   outline: 2px solid var(--violet);
   outline-offset: 1px;
 }
+
+/* The compose field fills the viewport and is the only text control on screen,
+   so a ring around it would frame the whole page. The caret carries focus here. */
+.compose-field:focus-visible { outline: none; }
+.compose-field::placeholder { color: var(--ink-faint); opacity: 1; }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
