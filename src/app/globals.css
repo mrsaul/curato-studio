@@ -18,6 +18,8 @@
   --line:      #C9B896;
   --line-soft: #DDCFB4;
   --line-bold: #141210;   /* the reference's heavy outline, for fills that want it */
+  --line-ui:   #7A6E5C;   /* 3.9:1 on --surface — for lines that carry meaning,
+                             e.g. the pending steps on a progress track */
 
   /* ─── Accent ───
      Pastels are FILLS, not text. Each pairs with --ink on top (7:1+).

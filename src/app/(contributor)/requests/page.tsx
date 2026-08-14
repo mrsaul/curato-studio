@@ -1,119 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getContributorRequests } from '@/lib/requests'
-import { CreativeRequest, RequestStatus } from '@/types/request'
-import RequestReplyForm from './RequestReplyForm'
-import DraftRetryButton from './DraftRetryButton'
-import CaptionShare from './CaptionShare'
-
-const STATUS_META: Record<RequestStatus, { label: string; color: string }> = {
-  new:               { label: 'Received',        color: 'var(--ink-faint)' },
-  interpreting:      { label: 'Processing',       color: 'var(--amber)' },
-  needs_info:        { label: 'Needs your answer',color: 'var(--amber)' },
-  draft_ready:       { label: 'Creating draft',   color: 'var(--amber)' },
-  awaiting_review:   { label: 'In review',        color: 'var(--violet)' },
-  approved:          { label: 'Approved',          color: 'var(--green)' },
-  changes_requested: { label: 'Changes needed',   color: 'var(--amber)' },
-  declined:          { label: 'Declined',          color: 'var(--red)' },
-  delivered:         { label: 'Delivered',         color: 'var(--green)' },
-}
-
-const SOURCE_LABEL: Record<string, string> = {
-  text:  'TEXT',
-  voice: 'VOICE',
-  photo: 'PHOTO',
-}
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const h = Math.floor(diff / 3600000)
-  if (h < 1) return 'Just now'
-  if (h < 24) return `${h}h ago`
-  const d = Math.floor(h / 24)
-  if (d < 7) return `${d}d ago`
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function RequestCard({ request }: { request: CreativeRequest }) {
-  const meta = STATUS_META[request.status]
-  const input = request.transcript ?? request.raw_text ?? ''
-  const preview = input ? (input.length > 120 ? input.slice(0, 120) + '…' : input) : null
-  const isApproved = request.status === 'approved' || request.status === 'delivered'
-
-  return (
-    <article style={{
-      background: 'var(--surface)',
-      borderRadius: 14,
-      marginBottom: 10,
-      border: '1px solid var(--line-soft)',
-      overflow: 'hidden',
-    }}>
-      {/* Status rail */}
-      <div style={{ height: 3, background: meta.color, opacity: 0.7 }} />
-
-      <div style={{ padding: '14px 16px' }}>
-        {/* Header row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{
-            fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.1em',
-            color: 'var(--ink-faint)', textTransform: 'uppercase',
-            background: 'var(--line-soft)', borderRadius: 4, padding: '2px 6px',
-          }}>
-            {SOURCE_LABEL[request.source_type] ?? request.source_type}
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>
-            {timeAgo(request.created_at)}
-          </span>
-        </div>
-
-        {/* Preview */}
-        {preview ? (
-          <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.55, marginBottom: 10 }}>
-            {preview}
-          </p>
-        ) : (
-          <p style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic', marginBottom: 10 }}>
-            {request.source_type === 'photo' ? 'Photo upload' : 'Media post'}
-          </p>
-        )}
-
-        {/* Intent summary */}
-        {request.intent_summary && (
-          <p style={{
-            fontSize: 12, color: 'var(--violet)', lineHeight: 1.45, marginBottom: 10,
-            fontStyle: 'italic',
-          }}>
-            {request.intent_summary}
-          </p>
-        )}
-
-        {/* Status badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: meta.color, display: 'inline-block', flexShrink: 0,
-          }} />
-          <span style={{ fontSize: 12, fontFamily: 'var(--mono)', color: meta.color, letterSpacing: '0.03em' }}>
-            {meta.label}
-          </span>
-        </div>
-
-        {/* Clarification question */}
-        {request.status === 'needs_info' && request.clarification_question && (
-          <RequestReplyForm requestId={request.id} question={request.clarification_question} />
-        )}
-
-        {/* Draft retry */}
-        {request.status === 'draft_ready' && (
-          <DraftRetryButton requestId={request.id} />
-        )}
-
-        {/* Share/copy for approved posts */}
-        {isApproved && <CaptionShare requestId={request.id} />}
-      </div>
-    </article>
-  )
-}
+import RequestsClient from './RequestsClient'
 
 export default async function RequestsPage() {
   const supabase = await createServerSupabaseClient()
@@ -122,56 +10,33 @@ export default async function RequestsPage() {
 
   const requests = await getContributorRequests(supabase, user.id)
 
-  const active = requests.filter(r => !['approved', 'delivered', 'declined'].includes(r.status))
-  const done = requests.filter(r => ['approved', 'delivered', 'declined'].includes(r.status))
-
   return (
     <div style={{ paddingTop: 28, paddingBottom: 32 }}>
-      {/* Header */}
       <p style={{
-        fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.12em',
-        textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6,
+        fontSize: 'var(--text-xs)', fontFamily: 'var(--mono)',
+        letterSpacing: 'var(--tracking-widest)', textTransform: 'uppercase',
+        color: 'var(--ink-faint)', marginBottom: 6,
       }}>
         Your work
       </p>
       <h1 style={{
-        fontFamily: 'var(--display)', fontSize: 26, fontWeight: 400,
-        letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: 24,
+        fontFamily: 'var(--display)', fontSize: 'var(--text-2xl)', fontWeight: 400,
+        letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: 'var(--space-6)',
       }}>
-        Briefs
+        Posts
       </h1>
 
       {requests.length === 0 ? (
         <div style={{ paddingTop: 40, textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: 'var(--ink-faint)', lineHeight: 1.6 }}>
-            No briefs yet.<br/>Head to Create to start your first post.
+          <p style={{
+            fontSize: 'var(--text-md)', color: 'var(--ink-faint)',
+            lineHeight: 'var(--leading-relaxed)',
+          }}>
+            Nothing here yet.<br />Head to Create to start your first post.
           </p>
         </div>
       ) : (
-        <>
-          {active.length > 0 && (
-            <section style={{ marginBottom: 32 }}>
-              <p style={{
-                fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.1em',
-                textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 12,
-              }}>
-                In progress · {active.length}
-              </p>
-              {active.map(r => <RequestCard key={r.id} request={r} />)}
-            </section>
-          )}
-          {done.length > 0 && (
-            <section>
-              <p style={{
-                fontSize: 10, fontFamily: 'var(--mono)', letterSpacing: '0.1em',
-                textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 12,
-              }}>
-                Done · {done.length}
-              </p>
-              {done.map(r => <RequestCard key={r.id} request={r} />)}
-            </section>
-          )}
-        </>
+        <RequestsClient requests={requests} />
       )}
     </div>
   )
