@@ -42,7 +42,10 @@ function InputPageInner() {
   const searchParams = useSearchParams()
   const brandId = searchParams.get('brandId') ?? ''
   const reviewerId = searchParams.get('reviewerId') ?? ''
-  const [mode, setMode] = useState<InputMode>('text')
+  const startParam = searchParams.get('start')
+  const [mode, setMode] = useState<InputMode>(
+    startParam === 'voice' || startParam === 'photo' ? startParam : 'text',
+  )
   const [text, setText] = useState('')
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [transcript, setTranscript] = useState('')

@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase-server'
-import BrandPickerClient from './BrandPickerClient'
+import { getContributorRequests } from '@/lib/requests'
+import { bucketOf } from '../requests/status'
+import CreatorHome from './CreatorHome'
 
 export default async function SubmitPage() {
   const supabase = await createServerSupabaseClient()
@@ -83,11 +85,15 @@ export default async function SubmitPage() {
     redirect('/login')
   }
 
-  // 1 brand: skip the picker, go directly to input
-  if (brands.length === 1) {
-    const b = brands[0]
-    redirect(`/submit/input?brandId=${b.id}&reviewerId=${b.reviewerId}`)
-  }
+  // Home, not a jump straight into the composer: the Creator needs to see
+  // their menu, what is waiting on them, and what is approved.
+  const requests = await getContributorRequests(supabase, user.id)
 
-  return <BrandPickerClient brands={brands} />
+  return (
+    <CreatorHome
+      brands={brands.map(b => ({ id: b.id, name: b.name, reviewerId: b.reviewerId }))}
+      needsYou={requests.filter(r => bucketOf(r.status) === 'needs_you')}
+      ready={requests.filter(r => bucketOf(r.status) === 'ready')}
+    />
+  )
 }
