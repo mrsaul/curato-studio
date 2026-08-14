@@ -204,9 +204,11 @@ export default function RequestsClient({ requests }: { requests: CreativeRequest
         role="tablist"
         aria-label="Filter posts by status"
         style={{
-          display: 'flex', gap: 'var(--space-2)',
-          overflowX: 'auto', scrollbarWidth: 'none',
-          marginBottom: 'var(--space-5)', paddingBottom: 2,
+          /* Wraps rather than scrolls: at 375px a scrolling row pushed
+             Ready and Declined off-screen with no hint they existed. */
+          display: 'flex', flexWrap: 'wrap',
+          columnGap: 'var(--space-2)', rowGap: 'var(--space-2)',
+          marginBottom: 'var(--space-5)',
         }}
       >
         {BUCKETS.map(b => {
